@@ -1,0 +1,17 @@
+{
+  "name": "upload_artifacts_firim",
+  "version": "1.0.0",
+  "description": "Upload artifacts to Firim",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js -m -o ../",
+    "test": "ncc run index.js"
+  },
+  "author": "OnekeyHq",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "app-info-parser": "^1.1.2",
+    "needle": "^2.8.0"
+  }
+}
