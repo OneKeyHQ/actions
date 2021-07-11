@@ -1,0 +1,16 @@
+{
+  "name": "notice_slack_app_update",
+  "version": "1.0.0",
+  "description": "Notify Slack app updates",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js -m -o ../",
+    "test": "ncc run index.js"
+  },
+  "author": "OnekeyHq",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "needle": "^2.8.0"
+  }
+}

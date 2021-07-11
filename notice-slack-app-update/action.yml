@@ -1,0 +1,30 @@
+name: 'Notice Slack App Update'
+description: 'Notify Slack app updates'
+author: 'OnekeyHq'
+inputs:
+  web-hook-url:
+    description: 'Slack webhook url'
+    required: true
+  artifact-type:
+    description: 'artifact type'
+  artifact-download-url:
+    description: 'artifact type'
+  artifact-bundle-id:
+    description: 'artifact package'
+  artifact-name:
+    description: 'artifact name'
+  artifact-version-code:
+    description: 'artifact version code'
+  artifact-version-name:
+    description: 'artifact version name'
+  change-log:
+    description: 'change log'
+  custom-message-title:
+    description: 'custom message title'
+  custom-message-payload:
+    description: 'custom message payload'
+  custom-issue-url:
+    description: 'ccustom issue url'
+runs:
+  using: 'node12'
+  main: 'index.js'
