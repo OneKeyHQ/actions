@@ -8,6 +8,9 @@ inputs:
   upload-file-path:
     description: 'The path to the uploaded file'
     required: true
+  custom-host:
+    description: 'Self-binding domain name'
+    required: false
   changelog:
     description: 'Change log'
     required: false
