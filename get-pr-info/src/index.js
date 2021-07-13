@@ -62,10 +62,10 @@ async function main() {
             }
 
             if (element && element.trim() != '' && element.trim() != '…') {
-                if (is_content_body) content_body += element + "\n"
+                if (is_content_body) content_body += element.trim() + ":-:"
                 if (is_issue) {
                     if (element.indexOf("If it fixes a bug or resolves a feature request") == -1) {
-                        issue += element + "\n"
+                        issue += element.trim() + ":-:"
                     }
                 }
             }
@@ -82,9 +82,9 @@ async function main() {
             }
         });
         // content_body
-        core.setOutput('content_body', content_body.trim());
+        core.setOutput('content_body', content_body.replace(/[\r\n]/g, '').trim());
         // issue
-        core.setOutput('issue', issue.trim());
+        core.setOutput('issue', issue.replace(/[\r\n]/g, '').trim());
     } catch (error) {
         console.error(error)
     }

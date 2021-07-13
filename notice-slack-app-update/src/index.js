@@ -13,12 +13,15 @@ async function main() {
     let input_change_log = core.getInput('change-log', { required: false })
     let input_custom_message_title = core.getInput('custom-message-title', { required: false })
     let input_custom_message_payload = core.getInput('custom-message-payload', { required: false })
-    let input_custom_issue_url = core.getInput('ccustom-issue-url', { required: false })
+    let input_custom_issue_url = core.getInput('custom-issue-url', { required: false })
 
     if (input_artifact_type.toLowerCase() == 'ios') {
         input_artifact_type = "iOS"
     } else if (input_artifact_type.toLowerCase() == 'android') {
         input_artifact_type = "Android"
+    }
+    if (input_change_log) {
+        input_change_log = input_change_log.replace(/:-:/g, '\n')
     }
 
     let data = {
@@ -105,24 +108,28 @@ async function main() {
     }
 
     if (input_custom_issue_url) {
-        data['attachments'][0]["blocks"].push({
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "*Issue link:* " + input_custom_issue_url
-            },
-            "accessory": {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "See issue",
-                },
-                "url": input_custom_issue_url,
-                "action_id": "button-action"
+        let content_split = input_custom_issue_url.split(/[\n]|:-:/g)
+        content_split.forEach(element => {
+            if (element && element.trim() != '') {
+                data['attachments'][0]["blocks"].push({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Issue link:* " + element
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "See issue",
+                        },
+                        "url": element,
+                        "action_id": "button-" + element
+                    }
+                })
             }
         })
     }
-
     await needle('post', input_web_hook_url, data, { json: true })
 }
 
