@@ -50,7 +50,14 @@ function upload_binary_file(param, artifact_info, file_path) {
     if (artifact_info.release_type) {
         data["x:release_type"] = artifact_info.release_type
     }
-
+    console.log(JSON.stringify({
+        "url":param.upload_url,
+        "file_path":file_path,
+        "key":param.key,
+        "x:name":artifact_info.name,
+        "x:build":artifact_info.versionCode,
+        "x:version":artifact_info.versionName
+    }), null, 4)
     return upload_file(param.upload_url, data)
 }
 
