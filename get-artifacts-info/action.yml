@@ -5,6 +5,9 @@ inputs:
   artifact-file-path:
     description: 'The path to the artifact file'
     required: true
+  version-suffix: 
+    description: 'Version name suffix'
+    required: false
 outputs:
   artifact-type:
     description: 'android or ios : An artifact type'

@@ -40,16 +40,6 @@ inputs:
 outputs:
   artifact-download-url:
     description: 'Download link'
-  artifact-type:
-    description: 'android or ios : An artifact type'
-  artifact-bundle-id:
-    description: 'android or ios : An artifact of the bundle id'
-  artifact-version-code:
-    description: 'android or ios : An artifact of the version code'
-  artifact-version-name:
-    description: 'android or ios : An artifact of the version name'
-  artifact-name:
-    description: 'android or ios : The name of an artifact'
 runs:
   using: "composite"
   steps:
@@ -69,28 +59,3 @@ runs:
         egrep '(Published succeed: )\S+' grep_text.txt | egrep -o '(https?):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]'
         export REGTEST_APK=`ls app/build/outputs/apk/RegTestOnekey/debug/*.apk`
         echo "::set-output name=artifact-download-url::$(echo $REGTEST_APK)"
-    
-    - name: Notice Slack App Update
-      uses: OneKeyHQ/onekey-github-actions/notice-slack-app-update@main
-      with:
-        web-hook-url: ${{ inputs.upload-file-path }}
-        artifact-download-url: ${{ steps.upload_info.outputs.artifact-download-url }}
-        artifact-type:  ${{ steps.artifacts_info.outputs.artifact-type }}
-        artifact-bundle-id:  ${{ steps.artifacts_info.outputs.artifact-bundle-id }}
-        artifact-version-code:  ${{ steps.artifacts_info.outputs.artifact-version-code }}
-        artifact-version-name:  ${{ steps.artifacts_info.outputs.artifact-version-name }}
-        artifact-name:  ${{ steps.artifacts_info.outputs.artifact-name }}
-        change-log: ${{ inputs.change_log }}
-        custom-issue-url: "${{ inputs.custom-issue-url }}"
-        custom-message-title: "${{ inputs.custom-message-title }}"
-        custom-message-payload: "${{ inputs.custom-message-payload }}"
-
-    - name: Set Output
-      run: |
-        echo "::set-output name=artifact-download-url::${{ steps.upload_info.outputs.artifact-download-url }}"
-        echo "::set-output name=artifact-type::${{ steps.artifacts_info.outputs.artifact-type }}"
-        echo "::set-output name=artifact-bundle-id::${{ steps.artifacts_info.outputs.artifact-bundle-id }}"
-        echo "::set-output name=artifact-version-code::${{ steps.artifacts_info.outputs.artifact-version-code }}"
-        echo "::set-output name=artifact-version-name::${{ steps.artifacts_info.outputs.artifact-version-name }}"
-        echo "::set-output name=artifact-name::${{ steps.artifacts_info.outputs.artifact-name }}"
-

@@ -3,6 +3,7 @@ const AppInfoParser = require('app-info-parser')
 
 async function main() {
     const input_artifact_file_path = core.getInput('artifact-file-path', { required: true })
+    const input_version_suffix = core.getInput('version-suffix')
 
     const parser = new AppInfoParser(input_artifact_file_path) // or xxx.ipa
     let artifact_info = await parser.parse().then(result => {
@@ -37,11 +38,18 @@ async function main() {
 
     console.info("Parser artifact info:\n" + JSON.stringify(artifact_info))
 
+    let versionName = undefined
+    if (input_version_suffix) {
+        versionName = artifact_info && artifact_info.versionName || ''
+    } else {
+        versionName = artifact_info.versionName + "-" + input_version_suffix
+    }
+
     core.setOutput('artifact-type', artifact_info && artifact_info.platform || '');
     core.setOutput('artifact-bundle-id', artifact_info && artifact_info.package || '');
     core.setOutput('artifact-name', artifact_info && artifact_info.name || '');
     core.setOutput('artifact-version-code', artifact_info && artifact_info.versionCode || '');
-    core.setOutput('artifact-version-name', artifact_info && artifact_info.versionName || '');
+    core.setOutput('artifact-version-name', versionName);
 }
 
 main().catch(err => core.setFailed(err.message));
