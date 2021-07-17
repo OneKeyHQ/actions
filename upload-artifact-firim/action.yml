@@ -1,0 +1,30 @@
+name: 'Upload Firim File'
+description: 'Upload artifacts to Firim'
+author: 'OnekeyHq'
+inputs:
+  api-token:
+    description: 'Account token for fir.im'
+    required: true
+  upload-file-path:
+    description: 'The path to the uploaded file'
+    required: true
+  changelog:
+    description: 'Change log'
+    required: false
+outputs:
+  artifact-download-url:
+    description: 'Download link'
+    value: ${{ steps.upload_firim_info.outputs.download-url }}
+runs:
+  using: "composite"
+  steps:
+    - name: upload firim
+      id: upload_firim_info
+      run: |
+        fir login ${{ inputs.api-token }} 
+        fir p ${{ inputs.upload-file-path }} -R -c "${{ inputs.changelog }}" > upload_fir.log 2>&1
+        cat upload_fir.log
+        export DOWNLOAD_URL=$(egrep '(Published succeed: )\S+' upload_fir.log | egrep -o '(https?):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]')
+        echo $DOWNLOAD_URL
+        echo "::set-output name=download-url::$(echo $DOWNLOAD_URL)"
+      shell: bash

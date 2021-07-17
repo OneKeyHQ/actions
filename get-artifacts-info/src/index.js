@@ -38,11 +38,9 @@ async function main() {
 
     console.info("Parser artifact info:\n" + JSON.stringify(artifact_info))
 
-    let versionName = undefined
+    let versionName = artifact_info && artifact_info.versionName || ''
     if (input_version_suffix) {
-        versionName = artifact_info && artifact_info.versionName || ''
-    } else {
-        versionName = artifact_info.versionName + "-" + input_version_suffix
+        versionName = versionName + "-" + input_version_suffix
     }
 
     core.setOutput('artifact-type', artifact_info && artifact_info.platform || '');
