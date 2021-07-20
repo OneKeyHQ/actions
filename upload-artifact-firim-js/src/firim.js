@@ -1,8 +1,8 @@
 var needle = require('needle');
 
 needle.defaults({
-    open_timeout: 5 * 60 * 1000,
-    read_timeout: 5 * 60 * 1000,
+    open_timeout: 8 * 60 * 1000,
+    read_timeout: 8 * 60 * 1000,
     response_timeout: 15 * 60 * 1000
 })
 
@@ -12,13 +12,19 @@ function get_blob_by_base64(dataURI) {
 }
 
 function upload_file(url, data) {
-    return needle('post', url, data, { multipart: true })
-        .then((result) => {
-            if (result.statusCode == 200)
-                return result.body
-            else
-                throw result
-        })
+    return new Promise((resolve, reject) => {
+        needle.post(url, data, { multipart: true }, function (err, resp, body) {
+            if (err) {
+                console.error(err)
+                return reject(new Error(`Upload failed: ${err}`))
+            } else if (resp.statusCode >= 200 || resp.statusCode < 400)
+                return resolve(body)
+            else {
+                console.error(resp)
+                return reject(new Error(`Upload failed: ${resp}`))
+            }
+        });
+    });
 }
 
 function upload_icon_file(param, base64) {
