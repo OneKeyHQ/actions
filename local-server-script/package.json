@@ -1,0 +1,17 @@
+{
+  "name": "local-server-script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js -m -o dist/",
+    "test": "ncc run index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "app-info-parser": "^1.1.2",
+    "minimist": "^1.2.5",
+    "needle": "^2.8.0"
+  }
+}
