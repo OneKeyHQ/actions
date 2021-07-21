@@ -9,7 +9,7 @@ const artifact_parser = require('./artifact_parser');
 const qiniu = require('qiniu');
 const qiniu_upload = require('./upload_qiniu');
 
-const needle = require('needle');
+const retry = require('p-retry');
 const argv = require('minimist')(process.argv.slice(2));
 
 
@@ -40,8 +40,11 @@ async function fun_upload_firim() {
         artifact_info.versionName += "-" + version_suffix
     }
 
-    let firim_token = await upload_firim.get_api_token(artifact_info, firim_api_token)
-    let upload_result = await upload_firim.upload_artifact(firim_token, artifact_info, apk_file_path, undefined, true)
+
+    let promise = upload_firim.get_api_token(artifact_info, firim_api_token)
+        .then((firim_token) => upload_firim.upload_artifact(firim_token, artifact_info, apk_file_path, undefined, true))
+
+    let upload_result = await retry(() => promise, { timeout: 100000, interval: 10000, backoff: 3 });
 
     artifact_info.download_url = upload_result.download_url
 
