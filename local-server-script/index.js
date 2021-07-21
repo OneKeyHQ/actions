@@ -40,11 +40,12 @@ async function fun_upload_firim() {
         artifact_info.versionName += "-" + version_suffix
     }
 
+    let promise = () => {
+        return upload_firim.get_api_token(artifact_info, firim_api_token)
+            .then((firim_token) => upload_firim.upload_artifact(firim_token, artifact_info, apk_file_path, undefined, true))
+    }
 
-    let promise = upload_firim.get_api_token(artifact_info, firim_api_token)
-        .then((firim_token) => upload_firim.upload_artifact(firim_token, artifact_info, apk_file_path, undefined, true))
-
-    let upload_result = await retry(() => promise, { timeout: 100000, interval: 10000, backoff: 3 });
+    let upload_result = await retry(() => promise(), { interval: 10 * 1000, retries: 3 });
 
     artifact_info.download_url = upload_result.download_url
 
@@ -73,7 +74,7 @@ async function upload_qiniu() {
 
     let artifact_info = await artifact_parser.parser(apk_file_path)
     if (!artifact_info && !artifact_info.platform) {
-        throw Error("Artifact 解析错误")
+        throw new Error("Artifact 解析错误")
     }
 
     let targetDir = "onekey/" + artifact_info.platform + "/v" + artifact_info.versionName

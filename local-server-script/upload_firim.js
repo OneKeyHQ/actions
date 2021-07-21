@@ -17,9 +17,9 @@ function upload_file(url, data) {
             if (err) {
                 console.error(err)
                 return reject(new Error(`Upload failed: ${err}`))
-            } else if (resp.statusCode >= 200 || resp.statusCode < 400)
+            } else if (resp.statusCode >= 200 || resp.statusCode < 400) {
                 return resolve(body)
-            else {
+            } else {
                 console.error(resp)
                 return reject(new Error(`Upload failed: ${resp}`))
             }
@@ -112,7 +112,7 @@ exports.upload_artifact = async function (params, artifact_info, upload_file_pat
     }
 
     if (!result.download_url) {
-        throw result
+        throw new Error(result)
     }
 
     console.log("download_url: " + download_url)
