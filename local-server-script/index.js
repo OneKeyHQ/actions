@@ -76,7 +76,7 @@ async function upload_qiniu() {
         throw Error("Artifact 解析错误")
     }
 
-    let targetDir = "/onekey/" + artifact_info.platform + "/v" + artifact_info.versionName
+    let targetDir = "onekey/" + artifact_info.platform + "/v" + artifact_info.versionName
 
     let upload_result = await qiniu_upload.upload_file(
         uploader,
