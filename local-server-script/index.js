@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 const fsPromises = fs.promises;
 
-const upload_firim = require('./upload_firim');
+const upload_firim = require('./upload_firim_cmd');
 const upload_notice = require('./upload_notice_slack');
 const artifact_parser = require('./artifact_parser');
 
@@ -40,20 +40,18 @@ async function fun_upload_firim() {
         artifact_info.versionName += "-" + version_suffix
     }
 
-    let promise = () => {
-        return upload_firim.get_api_token(artifact_info, firim_api_token)
-            .then((firim_token) => upload_firim.upload_artifact(firim_token, artifact_info, apk_file_path, undefined, true))
-    }
-
-    let upload_result = await retry(() => promise(), { interval: 10 * 1000, retries: 3 });
-
-    artifact_info.download_url = upload_result.download_url
-
-    await upload_notice.notice(web_hook_url, artifact_info, {
-        "title": custom_message_title,
-        "payload": custom_message_payload,
-        "issue_url": custom_issue_url,
-    })
+    console.log("begin upload firim.")
+    return upload_firim.upload(firim_api_token, apk_file_path, artifact_info.changelog)
+        .then((download_url) => {
+            artifact_info.download_url = download_url
+        })
+        .then(() => {
+            return upload_notice.notice(web_hook_url, artifact_info, {
+                "title": custom_message_title,
+                "payload": custom_message_payload,
+                "issue_url": custom_issue_url,
+            })
+        })
 }
 
 async function upload_qiniu() {
@@ -195,16 +193,16 @@ async function main() {
     }
     switch (argv['a']) {
         case 'upload_firim':
-            await fun_upload_firim()
-            break;
+            return fun_upload_firim()
 
         case 'upload_qiniu':
-            let download_url = await upload_qiniu();
-            await update_version_json(download_url)
-            break
+            return upload_qiniu().then((download_url) => {
+                update_version_json(download_url)
+            });
+
         case 'update_version':
-            await update_version_json(undefined)
-            break;
+            return update_version_json(undefined)
+
         default:
             console.error("不支持的操作")
             break;
