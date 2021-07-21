@@ -48,6 +48,9 @@ function upload_icon_file(param, base64) {
 }
 
 function upload_binary_file(param, artifact_info, file_path) {
+    if (artifact_info.changelog) {
+        artifact_info.changelog = artifact_info.changelog.replace(/:-:/g, '\n')
+    }
     var data = {
         "key": param.key,
         "token": param.token,

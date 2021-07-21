@@ -11,7 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "app-info-parser": "^1.1.2",
+    "glob": "^7.1.7",
     "minimist": "^1.2.5",
-    "needle": "^2.8.0"
+    "needle": "^2.8.0",
+    "p-all": "^4.0.0",
+    "p-retry": "^4.6.1",
+    "qiniu": "^7.4.0"
   }
 }

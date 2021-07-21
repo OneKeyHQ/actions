@@ -114,7 +114,7 @@ exports.notice = function (web_hook_url, artifact_info, custom) {
         ]
     }
 
-    if (input_custom_message_title) {
+    if (input_custom_message_title && input_custom_message_title !== '') {
         data['attachments'][0]["blocks"].push({
             "type": "section",
             "fields": [
@@ -126,7 +126,7 @@ exports.notice = function (web_hook_url, artifact_info, custom) {
         })
     }
 
-    if (input_custom_issue_url) {
+    if (input_custom_issue_url && input_custom_issue_url !== '') {
         let content_split = input_custom_issue_url.split(/[\n]|:-:/g)
         content_split.forEach(element => {
             if (element && element.trim() != '') {
