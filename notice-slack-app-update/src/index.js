@@ -31,7 +31,7 @@ async function main() {
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": input_artifact_type + " App " + input_artifact_name + " has a new update " + input_artifact_version_name
+                    "text": input_artifact_type + " App [ " + input_artifact_name + " ] has a new update [ " + input_artifact_version_name + " ]"
                 }
             },
             {
