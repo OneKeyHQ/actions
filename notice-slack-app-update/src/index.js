@@ -24,14 +24,16 @@ async function main() {
         input_change_log = input_change_log.replace(/:-:/g, '\n')
     }
 
+    const message_title = input_artifact_type + " App [ " + input_artifact_name + " ] has a new update [ " + input_artifact_version_name + " ]"
     let data = {
         "type": "modal",
+        "text": message_title,
         "blocks": [
             {
                 "type": "header",
                 "text": {
                     "type": "plain_text",
-                    "text": input_artifact_type + " App [ " + input_artifact_name + " ] has a new update [ " + input_artifact_version_name + " ]"
+                    "text": message_title
                 }
             },
             {
