@@ -82,14 +82,14 @@ async function main() {
         )} ${commit.commit.message}`;
       })
       .join('\n');
-    core.exportVariable('change-log', commits);
-    core.exportVariable('change-log-url', changelog.html_url);
+    core.setOutput('change-log', commits);
+    core.setOutput('change-log-url', changelog.html_url);
     log(`change-log: ${commits}`);
     log(`change-log-url: ${changelog.html_url}`);
   }
 
-  core.exportVariable('prev-tag', prevTag);
-  core.exportVariable('current-tag', currentTag);
+  core.setOutput('prev-tag', prevTag);
+  core.setOutput('current-tag', currentTag);
 
   log(`prev-tag: ${prevTag}`);
   log(`current-tag: ${currentTag}`);
