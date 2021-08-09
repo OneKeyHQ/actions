@@ -11,6 +11,9 @@ inputs:
   export-change-log:
     description: 'get diff and export change log'
     required: false
+  compare-to:
+    description: 'Compare to version for generate diff change log'
+    required: false
 outputs:
   change-log:
     description: 'change log between prev-tag and current-tag'
