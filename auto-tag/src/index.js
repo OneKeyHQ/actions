@@ -45,6 +45,7 @@ async function main() {
   const latestVersion = latestTag ? latestTag.tag : 0;
   const currentTagVersion = latestVersion + 1;
 
+  const prevTag = `${prefix}-${latestVersion}`;
   const currentTag = `${prefix}-${currentTagVersion}`;
 
   const createRefStatus = await octokit.rest.git.createRef({
@@ -57,16 +58,18 @@ async function main() {
   log(`createRefStatus ${createRefStatus.status} - ${JSON.stringify(createRefStatus.data)}`);
 
   if (latestVersion && exportDiff) {
-    log(`compareCommits refs/tags/${latestVersion} - refs/tags/${currentTagVersion}`);
+    log(`compareCommits refs/tags/${prevTag} - refs/tags/${currentTag}`);
 
-    const { status: changelogStatus, data: changelog } = await octokit.rest.repos.listCommits({
+    const { status: changelogStatus, data: changelog } = await octokit.rest.repos.compareCommits({
       owner,
       repo,
+      base: prevTag,
+      head: currentTag,
     });
 
     if (changelogStatus !== 200) {
       return core.warn(
-        `fetch commits between refs/tags/${latestVersion.tag} - refs/tags/${currentTag} failed!`,
+        `fetch commits between refs/tags/${prevTag} - refs/tags/${currentTag} failed!`,
       );
     }
 
@@ -83,11 +86,11 @@ async function main() {
     log(`change-log: ${changelogContent}`);
   }
 
-  core.exportVariable('prev-tag', `${prefix}-${latestVersion}`);
+  core.exportVariable('prev-tag', prevTag);
   core.exportVariable('current-tag', currentTag);
 
-  log(`prev-tag: ${latestVersion}`);
-  log(`current-tag: ${currentTagVersion}`);
+  log(`prev-tag: ${prevTag}`);
+  log(`current-tag: ${currentTag}`);
 }
 
 main();
