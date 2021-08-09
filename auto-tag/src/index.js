@@ -11,7 +11,7 @@ async function main() {
   const compareTo = core.getInput('compare-to');
 
   console.log(
-    "core.getInput('export-change-log')",
+    "core.getInput('export-change-log');",
     core.getInput('export-change-log'),
     typeof core.getInput('export-change-log'),
   );
@@ -97,4 +97,10 @@ async function main() {
   log(`current-tag: ${currentTag}`);
 }
 
+process.on('unhandledPromiseRejection', (error) => {
+  throw error;
+});
+process.on('unhandledRejection', (error) => {
+  throw error;
+});
 main();
