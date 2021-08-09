@@ -74,7 +74,7 @@ async function main() {
     }
 
     log(`get changelog, ${JSON.stringify(changelog)}`);
-    const changelogContent = changelog
+    const commits = changelog.commits
       .map((commit, i) => {
         return `#${i + 1}) @${commit.author ? commit.author.login || '' : ''} ${commit.sha.slice(
           0,
@@ -82,6 +82,10 @@ async function main() {
         )} ${commit.commit.message}`;
       })
       .join('\n');
+    const changelogContent = {
+      html_url: changelog.html_url,
+      commits,
+    };
     core.exportVariable('change-log', changelogContent);
     log(`change-log: ${changelogContent}`);
   }
