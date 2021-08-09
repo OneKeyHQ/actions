@@ -1,0 +1,25 @@
+name: 'Auto Tag'
+description: 'Auto tag'
+author: 'OnekeyHq'
+inputs:
+  prefix:
+    description: 'tag prefix for search and create'
+    required: true
+  debug: 
+    description: 'print debug log'
+    required: false
+  export-change-log:
+    description: 'get diff and export change log'
+    required: false
+outputs:
+  change-log:
+    description: 'change log between prev-tag and current-tag'
+  change-log-url:
+    description: 'change log html url'
+  prev-tag:
+    description: 'previous tag match prefix'
+  current-tag:
+    description: 'current-tag created'
+runs:
+  using: 'node12'
+  main: 'index.js'

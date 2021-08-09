@@ -1,0 +1,17 @@
+{
+  "name": "auto-tag",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Auto tag",
+  "main": "index.js",
+  "scripts": {
+    "build": "ncc build index.js -m -o ../",
+    "test": "ncc run index.js"
+  },
+  "author": "OnekeyHq",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@actions/github": "^5.0.0"
+  }
+}
