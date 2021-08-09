@@ -82,12 +82,9 @@ async function main() {
         )} ${commit.commit.message}`;
       })
       .join('\n');
-    const changelogContent = {
-      html_url: changelog.html_url,
-      commits,
-    };
-    core.exportVariable('change-log', changelogContent);
-    log(`change-log: ${changelogContent}`);
+    core.exportVariable('change-log', commits);
+    core.exportVariable('change-log-url', changelog.html_url);
+    log(`change-log: ${commits}`);
   }
 
   core.exportVariable('prev-tag', prevTag);

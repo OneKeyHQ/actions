@@ -14,6 +14,8 @@ inputs:
 outputs:
   change-log:
     description: 'change log between prev-tag and current-tag'
+  change-log-url:
+    description: 'change log html url'
   prev-tag:
     description: 'previous tag match prefix'
   current-tag:
