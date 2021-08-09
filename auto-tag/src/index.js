@@ -85,6 +85,7 @@ async function main() {
     core.exportVariable('change-log', commits);
     core.exportVariable('change-log-url', changelog.html_url);
     log(`change-log: ${commits}`);
+    log(`change-log-url: ${changelog.html_url}`);
   }
 
   core.exportVariable('prev-tag', prevTag);
