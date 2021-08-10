@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branch:
+      - master
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+
+      - name: "Checkout Source Code"
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - name: 'Build'
+        run: |
+          npm i -g @vercel/ncc
+          bash ./build.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 'Commit and Push'
+        run: |
+          email="github-actions[bot]@users.noreply.github.com"
+          name="github-actions[bot]"
+          git config --local user.email "${email}"
+          git config --local user.name "${name}"
+
+          git add -A
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "auto-build actions"
+            git push
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}

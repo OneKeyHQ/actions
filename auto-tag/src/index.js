@@ -8,9 +8,10 @@ async function main() {
   const prefix = core.getInput('prefix') || 'test';
   const debug = core.getInput('debug') || false;
   const exportDiff = core.getInput('export-change-log') === 'false' ? false : true;
+  const compareTo = core.getInput('compare-to');
 
   console.log(
-    "core.getInput('export-change-log')",
+    "core.getInput('export-change-log');",
     core.getInput('export-change-log'),
     typeof core.getInput('export-change-log'),
   );
@@ -45,7 +46,7 @@ async function main() {
   const latestVersion = latestTag ? latestTag.tag : 0;
   const currentTagVersion = latestVersion + 1;
 
-  const prevTag = `${prefix}-${latestVersion}`;
+  const prevTag = latestVersion ? `${prefix}-${latestVersion}` : '';
   const currentTag = `${prefix}-${currentTagVersion}`;
 
   const createRefStatus = await octokit.rest.git.createRef({
@@ -57,19 +58,20 @@ async function main() {
 
   log(`createRefStatus ${createRefStatus.status} - ${JSON.stringify(createRefStatus.data)}`);
 
-  if (latestVersion && exportDiff) {
-    log(`compareCommits refs/tags/${prevTag} - refs/tags/${currentTag}`);
+  const compareBase = compareTo || prevTag;
+  if (compareBase && exportDiff) {
+    log(`compareCommits refs/tags/${compareBase} - refs/tags/${currentTag}`);
 
     const { status: changelogStatus, data: changelog } = await octokit.rest.repos.compareCommits({
       owner,
       repo,
-      base: prevTag,
+      base: compareBase,
       head: currentTag,
     });
 
     if (changelogStatus !== 200) {
       return core.warn(
-        `fetch commits between refs/tags/${prevTag} - refs/tags/${currentTag} failed!`,
+        `fetch commits between refs/tags/${compareBase} - refs/tags/${currentTag} failed!`,
       );
     }
 
@@ -95,4 +97,10 @@ async function main() {
   log(`current-tag: ${currentTag}`);
 }
 
+process.on('unhandledPromiseRejection', (error) => {
+  throw error;
+});
+process.on('unhandledRejection', (error) => {
+  throw error;
+});
 main();
