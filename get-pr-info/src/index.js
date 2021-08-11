@@ -31,9 +31,6 @@ async function main() {
       return;
     }
     console.log('sdfsdf 2222');
-    const { title, body, number, assignee } = pr;
-    console.log({ title, body, number, assignee });
-    //   console.log(JSON.stringify(pr, null, 2));
 
     // additions
     core.setOutput('additions', pr.additions);
@@ -69,10 +66,11 @@ async function main() {
     // draft
     core.setOutput('draft', pr.draft);
 
+    const { title, body, number, assignee } = pr;
+    console.log({ title, body, number, assignee });
     let issue = '';
     let content_body = '';
 
-    let body = pr.body;
     let is_content_body = false;
     let is_issue = false;
 
