@@ -1,14 +1,39 @@
 const core = require('@actions/core');
-const github = require('@actions/github')
+const github = require('@actions/github');
+
+async function getMergedPullRequest(sha) {
+  const client = new github.getOctokit(process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN);
+  const { owner, repo } = github.context.repo;
+
+  const resp = await client.rest.pulls.list({
+    owner,
+    repo,
+    sort: 'updated',
+    direction: 'desc',
+    state: 'closed',
+    per_page: 100,
+  });
+
+  const pull = resp.data.find((p) => p.merge_commit_sha === sha);
+  if (!pull) {
+    return null;
+  }
+  return pull;
+}
 
 async function main() {
-    const pr = github.context.payload.pull_request;
-    console.log("sdfsdf")
+  try {
+    let pr =
+      github.context.payload.pull_request || (await getMergedPullRequest(github.context.sha));
+    console.log('sdfsdf 1111');
     if (!pr) {
-        core.setFailed('Not a pull request')
-        return
+      console.error(`commit=${github.context.sha} is NOT a pull request`);
+      return;
     }
-    console.log("sdfsdf")
+    console.log('sdfsdf 2222');
+    const { title, body, number, assignee } = pr;
+    console.log({ title, body, number, assignee });
+    //   console.log(JSON.stringify(pr, null, 2));
 
     // additions
     core.setOutput('additions', pr.additions);
@@ -20,6 +45,7 @@ async function main() {
     core.setOutput('commits', pr.commits);
     // assignee
     core.setOutput('assignee', pr.assignee);
+    core.setOutput('assignees', pr.assignees);
     // number
     core.setOutput('number', pr.number);
     // title
@@ -33,61 +59,59 @@ async function main() {
     // url
     core.setOutput('url', pr.html_url);
     // base_branch
-    core.setOutput('base_branch', pr.base.ref);
+    core.setOutput('base_branch', pr.base && pr.base.ref);
     // base_commit
-    core.setOutput('base_commit', pr.base.sha);
+    core.setOutput('base_commit', pr.base && pr.base.sha);
     // head_branch
-    core.setOutput('head_branch', pr.head.ref);
+    core.setOutput('head_branch', pr.head && pr.head.ref);
     // head_commit
-    core.setOutput('head_commit', pr.head.sha);
+    core.setOutput('head_commit', pr.head && pr.head.sha);
     // draft
     core.setOutput('draft', pr.draft);
 
+    let issue = '';
+    let content_body = '';
 
-    try {
-        let issue = ""
-        let content_body = ""
+    let body = pr.body;
+    let is_content_body = false;
+    let is_issue = false;
 
-        let body = pr.body
-        let is_content_body = false
-        let is_issue = false
+    let content_split = body.split(/[\n]/);
+    content_split.forEach((element) => {
+      if (element.indexOf('## Does this close any currently') != -1) {
+        is_content_body = false;
+      }
+      if (element.indexOf('## Pull request type') != -1) {
+        is_issue = false;
+      }
 
-        let content_split = body.split(/[\n]/)
-        content_split.forEach(element => {
-            if (element.indexOf('## Does this close any currently') != -1) {
-                is_content_body = false
-            }
-            if (element.indexOf('## Pull request type') != -1) {
-                is_issue = false
-            }
+      if (element && element.trim() != '' && element.trim() != '…') {
+        if (is_content_body) content_body += element.trim() + ':-:';
+        if (is_issue) {
+          if (element.indexOf('If it fixes a bug or resolves a feature request') == -1) {
+            issue += element.trim() + ':-:';
+          }
+        }
+      }
 
-            if (element && element.trim() != '' && element.trim() != '…') {
-                if (is_content_body) content_body += element.trim() + ":-:"
-                if (is_issue) {
-                    if (element.indexOf("If it fixes a bug or resolves a feature request") == -1) {
-                        issue += element.trim() + ":-:"
-                    }
-                }
-            }
-
-            if (element.indexOf('## What does this implement/fix') != -1) {
-                is_content_body = true
-            }
-            if (element.indexOf('## Does this close any currently') != -1) {
-                is_issue = true
-                is_content_body = false
-            }
-            if (element.indexOf('## Pull request type') != -1) {
-                is_issue = false
-            }
-        });
-        // content_body
-        core.setOutput('content_body', content_body.replace(/[\r\n]/g, '').trim());
-        // issue
-        core.setOutput('issue', issue.replace(/[\r\n]/g, '').trim());
-    } catch (error) {
-        console.error(error)
-    }
+      if (element.indexOf('## What does this implement/fix') != -1) {
+        is_content_body = true;
+      }
+      if (element.indexOf('## Does this close any currently') != -1) {
+        is_issue = true;
+        is_content_body = false;
+      }
+      if (element.indexOf('## Pull request type') != -1) {
+        is_issue = false;
+      }
+    });
+    // content_body
+    core.setOutput('content_body', content_body.replace(/[\r\n]/g, '').trim());
+    // issue
+    core.setOutput('issue', issue.replace(/[\r\n]/g, '').trim());
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-main().catch(err => core.setFailed(err.message));
+main().catch((err) => core.setFailed(err.message));
