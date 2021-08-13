@@ -9,7 +9,6 @@ const artifact_parser = require('./artifact_parser');
 const qiniu = require('qiniu');
 const qiniu_upload = require('./upload_qiniu');
 
-const retry = require('p-retry');
 const argv = require('minimist')(process.argv.slice(2));
 
 
@@ -27,7 +26,7 @@ async function fun_upload_firim() {
     let custom_message_title = argv['custom_message_title']
     let custom_message_payload = argv['custom_message_payload']
     let custom_issue_url = argv['custom_issue_url']
-    let no_notice_slack = argv['no_notice_slack'] || true
+    let notice_slack = argv['notice_slack'] || true
 
     let apk_file_path = path.join(base_apk_dir, file_name)
 
@@ -42,20 +41,18 @@ async function fun_upload_firim() {
     }
 
     console.log("begin upload firim.")
-    return upload_firim.upload(firim_api_token, apk_file_path, artifact_info.changelog)
+    let upload_info = await upload_firim.upload(firim_api_token, apk_file_path, artifact_info.changelog)
         .then((download_url) => {
             artifact_info.download_url = download_url
         })
-        .then(() => {
-            if (!no_notice_slack) {
-                console.log("Notify the slack.")
-                upload_notice.notice(web_hook_url, artifact_info, {
-                    "title": custom_message_title,
-                    "payload": custom_message_payload,
-                    "issue_url": custom_issue_url,
-                })
-            }
+    if (notice_slack == true || notice_slack == 'true') {
+        console.log("Notify the slack.")
+        await upload_notice.notice(web_hook_url, artifact_info, {
+            "title": custom_message_title,
+            "payload": custom_message_payload,
+            "issue_url": custom_issue_url,
         })
+    }
 }
 
 async function upload_qiniu() {
@@ -198,7 +195,8 @@ async function main() {
     }
     switch (argv['a']) {
         case 'upload_firim':
-            return fun_upload_firim()
+            await fun_upload_firim()
+            break;
 
         case 'upload_qiniu':
             return upload_qiniu().then((download_url) => {
