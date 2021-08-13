@@ -27,6 +27,7 @@ async function fun_upload_firim() {
     let custom_message_title = argv['custom_message_title']
     let custom_message_payload = argv['custom_message_payload']
     let custom_issue_url = argv['custom_issue_url']
+    let no_notice_slack = argv['no_notice_slack'] || true
 
     let apk_file_path = path.join(base_apk_dir, file_name)
 
@@ -46,11 +47,14 @@ async function fun_upload_firim() {
             artifact_info.download_url = download_url
         })
         .then(() => {
-            return upload_notice.notice(web_hook_url, artifact_info, {
-                "title": custom_message_title,
-                "payload": custom_message_payload,
-                "issue_url": custom_issue_url,
-            })
+            if (!no_notice_slack) {
+                console.log("Notify the slack.")
+                upload_notice.notice(web_hook_url, artifact_info, {
+                    "title": custom_message_title,
+                    "payload": custom_message_payload,
+                    "issue_url": custom_issue_url,
+                })
+            }
         })
 }
 
@@ -185,6 +189,7 @@ async function main() {
     // --a={a}
     // upload_firim
     // upload_qiniu
+    // upload_qiniu_file
     // update_version
 
     // 打印命令行解析后的对象信息
@@ -196,6 +201,11 @@ async function main() {
             return fun_upload_firim()
 
         case 'upload_qiniu':
+            return upload_qiniu().then((download_url) => {
+                update_version_json(download_url)
+            });
+
+        case 'upload_qiniu_file':
             return upload_qiniu().then((download_url) => {
                 update_version_json(download_url)
             });

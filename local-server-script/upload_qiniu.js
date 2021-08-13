@@ -3,7 +3,8 @@ const fs = require('fs');
 
 const qiniu = require('qiniu');
 const glob = require('glob');
-const retry = require('p-retry');
+const Promise = require('bluebird');
+const retry = require('bluebird-retry');
 
 exports.generateToken = function (bucket, ak, sk) {
     const mac = new qiniu.auth.digest.Mac(ak, sk);
