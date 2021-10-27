@@ -7,7 +7,7 @@ const { owner, repo } = github.context.repo;
 
 async function main() {
   let prefix = core.getInput('prefix') || 'test';
-  prefix = prefix.replace('##date##', dayjs().format('MMdd'));
+  prefix = prefix.replace('##date##', dayjs().format('MMDD'));
   const debug = core.getInput('debug') || false;
   const exportDiff = core.getInput('export-change-log') === 'false' ? false : true;
   const compareTo = core.getInput('compare-to');
