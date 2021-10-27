@@ -1,11 +1,13 @@
 const github = require('@actions/github');
 const core = require('@actions/core');
+const dayjs = require('dayjs');
 
 const octokit = new github.getOctokit(process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN);
 const { owner, repo } = github.context.repo;
 
 async function main() {
-  const prefix = core.getInput('prefix') || 'test';
+  let prefix = core.getInput('prefix') || 'test';
+  prefix = prefix.replace('##date##', dayjs().format('MMdd'));
   const debug = core.getInput('debug') || false;
   const exportDiff = core.getInput('export-change-log') === 'false' ? false : true;
   const compareTo = core.getInput('compare-to');
@@ -34,7 +36,7 @@ async function main() {
 
   const formattedTags = previousTags
     .map((payload) => ({
-      tag: +payload.ref.replace(`refs/tags/${prefix}-`, ''),
+      tag: +payload.ref.replace(`refs/tags/${prefix}-`, '').replace(`refs/tags/${prefix}`, ''),
       hash: payload.object.sha,
     }))
     .filter(({ tag }) => !Number.isNaN(tag))
