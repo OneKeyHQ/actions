@@ -10,6 +10,7 @@ declare -a arr=(
   "update-android-version-file"
   "upload-artifact-firim"
   "upload-artifact-firim-js"
+  "build-gradle-edit"
   )
 
 for i in "${arr[@]}"

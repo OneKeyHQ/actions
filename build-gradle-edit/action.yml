@@ -1,0 +1,17 @@
+name: 'Build Gradle Edit'
+description: ''
+author: 'OnekeyHq'
+inputs:
+  versionCode:
+    description: 'versionCode'
+    required: true
+  versionName:
+    description: 'versionName'
+    required: true
+  android_dir:
+    description: 'source dir'
+    default: './'
+    required: false
+runs:
+  using: 'node12'
+  main: 'index.js'
