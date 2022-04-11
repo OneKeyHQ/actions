@@ -11,6 +11,7 @@ declare -a arr=(
   "upload-artifact-firim"
   "upload-artifact-firim-js"
   "build-gradle-edit"
+  "build-plist-edit"
   )
 
 for i in "${arr[@]}"
