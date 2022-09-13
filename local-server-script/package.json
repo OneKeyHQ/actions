@@ -12,7 +12,7 @@
   "dependencies": {
     "app-info-parser": "^1.1.2",
     "glob": "^7.1.7",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "needle": "^2.8.0",
     "qiniu": "^7.4.0",
     "bluebird": "^3.7.2",
