@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 
 declare -a arr=(
-  "auto-tag"
-  "get-artifacts-info"
-  "get-pr-info"
-  "local-server-script"
   "notice-slack-app-update"
-  "qiniu-upload"
-  "update-android-version-file"
-  "upload-artifact-firim"
-  "upload-artifact-firim-js"
   "build-gradle-edit"
   "build-plist-edit"
   "s3-upload"
+  "dotenv-action"
+  "expo-server"
+  "gh-pages"
   )
 
 for i in "${arr[@]}"

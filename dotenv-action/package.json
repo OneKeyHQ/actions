@@ -1,0 +1,35 @@
+{
+  "name": "dotenv-action",
+  "version": "1.0.0",
+  "description": "Load variables from a .env file",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint index.js",
+    "build": "ncc build index.js -o dist",
+    "test": "eslint index.js && jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/falti/dotenv-action.git"
+  },
+  "keywords": [
+    "GitHub",
+    "Actions",
+    "JavaScript"
+  ],
+  "author": "GitHub",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/falti/dotenv-action/issues"
+  },
+  "homepage": "https://github.com/falti/dotenv-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "dotenv": "^8.2.0"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.1",
+    "eslint": "^6.8",
+    "jest": "^27.0"
+  }
+}
