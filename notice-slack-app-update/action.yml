@@ -25,6 +25,9 @@ inputs:
     description: 'custom message payload'
   custom-issue-url:
     description: 'ccustom issue url'
+  filter-code:
+    description: 'Filter packets ending in 00, default:true'
+    default: true
 runs:
   using: 'node12'
   main: 'index.js'
