@@ -14,6 +14,18 @@ async function main() {
     let input_custom_message_title = core.getInput('custom-message-title', { required: false })
     let input_custom_message_payload = core.getInput('custom-message-payload', { required: false })
     let input_custom_issue_url = core.getInput('custom-issue-url', { required: false })
+    
+    try {
+        let input_filter_code = core.getBooleanInput('filter-code')
+        if (input_filter_code && input_artifact_version_code){
+            if(parseInt(input_artifact_version_code) % 100 === 0){
+                console.log("Skipping notification for patch version")
+                return;
+            }
+        }
+    } catch (error) {
+        // ignore   
+    }
 
     if (input_artifact_type.toLowerCase() == 'ios') {
         input_artifact_type = "iOS"
