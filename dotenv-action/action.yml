@@ -17,8 +17,8 @@ inputs:
     required: false
     default: 'false'
 outputs:
-  generic: # output will be available to future steps 
+  generic: # output will be available to future steps
     description: 'This command will have generic output variables based on .env'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
