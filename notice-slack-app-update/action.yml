@@ -29,5 +29,5 @@ inputs:
     description: 'Filter packets ending in 00, default:true'
     default: true
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'index.js'
