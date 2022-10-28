@@ -89,3 +89,18 @@ export function setVersionCode(versionCode: number, buildGradle: string) {
   const pattern = new RegExp(`versionCode.*`);
   return buildGradle.replace(pattern, `versionCode ${versionCode}`);
 }
+
+export function setApplicationId(
+  applicationId: string | null,
+  buildGradle: string
+) {
+  if (applicationId == null || applicationId === "") {
+    return buildGradle;
+  }
+
+  let pattern = new RegExp(`applicationId .*`);
+  if (pattern.test(buildGradle)) {
+    return buildGradle.replace(pattern, `applicationId "${applicationId}"`);
+  }
+  return buildGradle;
+}
