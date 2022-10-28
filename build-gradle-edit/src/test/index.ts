@@ -1,23 +1,16 @@
-const core = require("@actions/core");
 import {
   readBuildGradleAsync,
   writeBuildGradleAsync,
   setVersionCode,
   setVersionName,
   setApplicationId,
-} from "./gradleUtils";
+} from "../gradleUtils";
 
 async function main() {
-  const input_version_code = core.getInput("versionCode", {
-    required: true,
-  });
-  const input_version_name = core.getInput("versionName", {
-    required: true,
-  });
-  const project_path = core.getInput("android_dir");
-  const input_package_name = core.getInput("packageName", {
-    required: false,
-  });
+  const input_version_code = 123;
+  const input_version_name = "test-dev";
+  const project_path = "../../../frontend-monorepo/packages/app";
+  const input_package_name = "com.test.app.dev";
 
   if (!project_path) return;
   console.log(`Reading build.gradle from ${project_path}`);

@@ -8,6 +8,9 @@ inputs:
   versionName:
     description: 'versionName'
     required: true
+  packageName:
+    description: 'packageName (ApplicationID)'
+    required: false
   android_dir:
     description: 'source dir'
     default: './'

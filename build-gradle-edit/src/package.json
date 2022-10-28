@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "ncc build index.ts -m -o ../",
-    "test": "ncc run index.ts"
+    "test": "ncc run test/index.ts"
   },
   "author": "",
   "license": "ISC",
