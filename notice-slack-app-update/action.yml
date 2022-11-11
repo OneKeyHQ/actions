@@ -24,7 +24,7 @@ inputs:
   custom-message-payload:
     description: 'custom message payload'
   custom-issue-url:
-    description: 'ccustom issue url'
+    description: 'custom issue url'
   filter-code:
     description: 'Filter packets ending in 00, default:true'
     default: true
