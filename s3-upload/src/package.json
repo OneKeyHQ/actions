@@ -9,10 +9,11 @@
     "build": "ncc build index.js -m -o ../"
   },
   "dependencies": {
-    "@actions/core": "^1.9.1",
+    "@actions/core": "^1.10.0",
     "aws-sdk": "^2.641.0",
     "klaw-sync": "^6.0.0",
     "mime-types": "^2.1.26",
-    "shortid": "^2.2.15"
+    "shortid": "^2.2.15",
+    "@vercel/ncc": "latest"
   }
 }
