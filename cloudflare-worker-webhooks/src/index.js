@@ -15,6 +15,17 @@ async function run() {
       downloadUrl: core.getInput('artifact-download-url'),
     };
 
+
+    if (!webhookUrl) {
+      core.setFailed('web-hook-url is required');
+      return
+    }
+
+    if (!secretKey) {
+      core.setFailed('secret-key is required');
+      return
+    }
+
     const dataString = JSON.stringify(data);
     const hash = crypto.createHmac('sha1', secretKey)
     .update(dataString)
