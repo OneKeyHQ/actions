@@ -108,5 +108,5 @@ dist
 
 .DS_Store
 
-# cloudflare-worker-webhooks
-!cloudflare-worker-webhooks/dist
+# slack-notify-webhook
+!slack-notify-webhook/dist
