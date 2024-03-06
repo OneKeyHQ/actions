@@ -15,6 +15,7 @@ async function run() {
       downloadUrl: core.getInput('artifact-download-url'),
     };
 
+
     if (!webhookUrl) {
       core.setFailed('web-hook-url is required');
       return

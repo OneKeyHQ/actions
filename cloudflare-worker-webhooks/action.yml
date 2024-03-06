@@ -1,6 +1,9 @@
 name: 'Cloudflare Worker Webhooks'
 description: 'Send notifications via Cloudflare Worker'
 inputs:
+  secret-key:
+    description: 'Secret key for the Github action signature'
+    required: true
   web-hook-url:
     description: 'Webhook URL for the Cloudflare Worker'
     required: true
