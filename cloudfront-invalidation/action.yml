@@ -1,0 +1,27 @@
+name: Invalidate CloudFront Cache
+description: 'Invalidate CloudFront cache for specified paths'
+author: 'xiaoshude'
+branding:
+  icon: 'refresh-cw'
+  color: 'blue'
+inputs:
+  aws_key_id:
+    description: 'AWS Access Key ID'
+    required: true
+  aws_secret_access_key:
+    description: 'AWS Secret Access Key'
+    required: true
+  distribution_id:
+    description: 'CloudFront Distribution ID'
+    required: true
+  paths:
+    description: 'Comma-separated list of paths to invalidate'
+    required: true
+outputs:
+  invalidation_id:
+    description: 'ID of the created invalidation'
+  invalidation_status:
+    description: 'Status of the created invalidation'
+runs:
+  using: 'node16'
+  main: 'index.js'
