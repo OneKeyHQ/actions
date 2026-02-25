@@ -8,6 +8,7 @@ declare -a arr=(
   "dotenv-action"
   "expo-server"
   "gh-pages"
+  "pr-impact-analysis"
   )
 
 for i in "${arr[@]}"

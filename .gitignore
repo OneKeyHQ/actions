@@ -110,3 +110,6 @@ dist
 
 # slack-notify-webhook
 !slack-notify-webhook/dist
+
+# pr-impact-analysis
+!pr-impact-analysis/dist
