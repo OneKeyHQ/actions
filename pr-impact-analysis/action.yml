@@ -12,7 +12,7 @@ inputs:
     required: true
   llm-api-base-url:
     description: 'LLM API base URL (OpenAI-compatible)'
-    default: 'https://api.deepseek.com'
+    default: 'https://api.deepseek.com/v3.2_speciale_expires_on_20251215'
   llm-model:
     description: 'Model name'
     default: 'deepseek-chat'

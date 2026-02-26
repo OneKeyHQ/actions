@@ -57,7 +57,7 @@ jobs:
 |------|----------|---------|-------------|
 | `github-token` | yes | — | GitHub token to fetch PR diff |
 | `llm-api-key` | yes | — | LLM API key |
-| `llm-api-base-url` | no | `https://api.deepseek.com` | LLM API base URL (OpenAI-compatible) |
+| `llm-api-base-url` | no | `https://api.deepseek.com/v3.2_speciale_expires_on_20251215` | LLM API base URL (OpenAI-compatible) |
 | `llm-model` | no | `deepseek-chat` | Model name |
 | `jira-base-url` | yes | — | Jira instance URL |
 | `jira-email` | yes | — | Jira account email |
@@ -80,8 +80,8 @@ jobs:
 Uses OpenAI-compatible `/v1/chat/completions` endpoint. Switch by changing inputs:
 
 ```yaml
-# DeepSeek (default, cost-effective for testing)
-llm-api-base-url: https://api.deepseek.com
+# DeepSeek v3.2 (default, cost-effective for testing)
+llm-api-base-url: https://api.deepseek.com/v3.2_speciale_expires_on_20251215
 llm-model: deepseek-chat
 
 # OpenAI
