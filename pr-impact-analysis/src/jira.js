@@ -4,7 +4,7 @@ const core = require('@actions/core');
 async function createIssue({ analysis, prData, config }) {
   const { baseUrl, email, apiToken, projectKey, issueType, assigneeId } = config;
 
-  const summary = `[影响分析] ${prData.title} #${prData.number}`;
+  const summary = `[PR 分析] ${prData.title} #${prData.number}`;
   const description = buildADF(analysis, prData);
 
   const riskLabel = `risk-${analysis.risk_level}`;
@@ -76,20 +76,6 @@ function buildADF(analysis, prData) {
       heading('影响分析', 3),
       paragraph(analysis.impact_analysis || '无'),
       rule(),
-
-      heading('测试 Checklist'),
-      taskList(analysis.test_checklist),
-      rule(),
-
-      heading('回归测试范围'),
-      bulletList(analysis.regression_areas.length > 0
-        ? analysis.regression_areas
-        : ['无']),
-      rule(),
-
-      heading('备注'),
-      paragraph(analysis.notes || '无'),
-      rule(),
       paragraph(`由 GitHub Action 自动创建 | 查看 PR: ${prData.prUrl}`),
     ],
   };
@@ -122,20 +108,6 @@ function bulletList(items) {
     content: items.map(item => ({
       type: 'listItem',
       content: [paragraph(item)],
-    })),
-  };
-}
-
-function taskList(items) {
-  if (!items || items.length === 0) {
-    return paragraph('无测试项');
-  }
-  // Fallback to bulletList with checkbox prefix for broader ADF compatibility
-  return {
-    type: 'bulletList',
-    content: items.map(item => ({
-      type: 'listItem',
-      content: [paragraph(`☐ ${item}`)],
     })),
   };
 }
