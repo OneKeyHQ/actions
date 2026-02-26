@@ -71,7 +71,7 @@ ${prData.files.map(f => `- [${f.status}] ${f.filename}`).join('\n')}
 ## Diff 内容
 ${prData.diff}`;
 
-  const url = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`;
+  const url = baseUrl.replace(/\/+$/, '');
 
   core.info(`Calling LLM: ${model}`);
 

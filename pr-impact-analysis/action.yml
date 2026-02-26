@@ -11,7 +11,7 @@ inputs:
     description: 'LLM API key'
     required: true
   llm-api-base-url:
-    description: 'LLM API base URL (OpenAI-compatible)'
+    description: 'Full LLM API endpoint URL, e.g. https://api.openai.com/v1/chat/completions'
     required: true
   llm-model:
     description: 'Model name'
