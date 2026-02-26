@@ -1,0 +1,51 @@
+name: 'PR Impact Analysis'
+description: 'Analyze PR impact via LLM and create Jira issue for QA'
+branding:
+  icon: 'search'
+  color: 'blue'
+inputs:
+  github-token:
+    description: 'GitHub token to fetch PR diff'
+    required: true
+  llm-api-key:
+    description: 'LLM API key'
+    required: true
+  llm-api-base-url:
+    description: 'Full LLM API endpoint URL, e.g. https://api.openai.com/v1/chat/completions'
+    required: true
+  llm-model:
+    description: 'Model name'
+    required: true
+  jira-base-url:
+    description: 'Jira instance URL, e.g. https://yourteam.atlassian.net'
+    required: true
+  jira-email:
+    description: 'Jira account email for API auth'
+    required: true
+  jira-api-token:
+    description: 'Jira API token'
+    required: true
+  jira-project-key:
+    description: 'Jira project key, e.g. QA'
+    required: true
+  jira-issue-type:
+    description: 'Jira issue type to create'
+    default: '测试 QA'
+  jira-assignee-id:
+    description: 'Jira user account ID to assign the issue to'
+    required: false
+  custom-prompt:
+    description: 'Additional prompt context for LLM analysis'
+    required: false
+outputs:
+  jira-issue-key:
+    description: 'Created Jira issue key, e.g. QA-123 (empty if skipped)'
+  jira-issue-url:
+    description: 'URL to the created Jira issue (empty if skipped)'
+  analysis-summary:
+    description: 'LLM generated impact analysis summary'
+  skipped:
+    description: 'Whether QA was skipped (true/false)'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
