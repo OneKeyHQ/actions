@@ -19,7 +19,7 @@ async function getPRData(token) {
     pull_number: pullNumber,
   });
 
-  const { data: files } = await octokit.rest.pulls.listFiles({
+  const files = await octokit.paginate(octokit.rest.pulls.listFiles, {
     owner,
     repo,
     pull_number: pullNumber,
