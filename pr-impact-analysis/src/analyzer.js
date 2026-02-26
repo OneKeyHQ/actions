@@ -69,7 +69,9 @@ async function analyze({ prData, apiKey, baseUrl, model, customPrompt }) {
 ${prData.files.map(f => `- [${f.status}] ${f.filename}`).join('\n')}
 
 ## Diff 内容
-${prData.diff}`;
+${prData.diff}
+
+请按要求输出 JSON。`;
 
   const url = baseUrl.replace(/\/+$/, '');
 
