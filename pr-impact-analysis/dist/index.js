@@ -40945,7 +40945,7 @@ async function run() {
     // 1. Read inputs
     const githubToken = core.getInput('github-token', { required: true });
     const llmApiKey = core.getInput('llm-api-key', { required: true });
-    const llmBaseUrl = core.getInput('llm-api-base-url') || 'https://api.deepseek.com/v3.2_speciale_expires_on_20251215';
+    const llmBaseUrl = core.getInput('llm-api-base-url') || 'https://api.deepseek.com';
     const llmModel = core.getInput('llm-model') || 'deepseek-chat';
     const customPrompt = core.getInput('custom-prompt') || '';
 
