@@ -91,15 +91,24 @@ async function callLLM(url, apiKey, model, systemPrompt, userMessage) {
     response_format: { type: 'json_object' },
   };
 
-  const { data } = await axios.post(url, payload, {
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    timeout: 120000,
-  });
+  try {
+    const { data } = await axios.post(url, payload, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    });
 
-  return data.choices[0].message.content;
+    return data.choices[0].message.content;
+  } catch (error) {
+    if (error.response) {
+      const { status, data } = error.response;
+      const detail = typeof data === 'string' ? data : JSON.stringify(data);
+      throw new Error(`LLM API error ${status}: ${detail}`);
+    }
+    throw error;
+  }
 }
 
 function parseLLMResponse(raw) {
