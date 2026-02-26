@@ -43,10 +43,10 @@ jobs:
         uses: OneKeyHQ/actions/pr-impact-analysis@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          llm-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
-          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-          jira-email: ${{ secrets.JIRA_EMAIL }}
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+          llm-api-key: ${{ secrets.PIA_DEEPSEEK_API_KEY }}
+          jira-base-url: ${{ secrets.PIA_JIRA_BASE_URL }}
+          jira-email: ${{ secrets.PIA_JIRA_EMAIL }}
+          jira-api-token: ${{ secrets.PIA_JIRA_API_TOKEN }}
           jira-project-key: 'QA'
           jira-assignee-id: '<jira-account-id>'
 ```
