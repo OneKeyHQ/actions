@@ -26,6 +26,19 @@ async function run() {
     const prData = await getPRData(githubToken);
     core.info(`PR #${prData.number}: ${prData.title} (${prData.files.length} files changed)`);
 
+    // 2.5. Check if Jira issue already exists (branch or title contains OK-XXXX)
+    const jiraKeyPattern = /OK-\d+/i;
+    const existingKey = prData.branch.match(jiraKeyPattern)?.[0]
+      || prData.title.match(jiraKeyPattern)?.[0];
+    if (existingKey) {
+      core.info(`Jira issue ${existingKey.toUpperCase()} already linked, skipping analysis and creation.`);
+      core.setOutput('jira-issue-key', existingKey.toUpperCase());
+      core.setOutput('jira-issue-url', '');
+      core.setOutput('skipped', 'true');
+      core.setOutput('analysis-summary', `Linked to existing issue ${existingKey.toUpperCase()}`);
+      return;
+    }
+
     // 3. Analyze via LLM
     core.info('Step 2/3: Analyzing impact via LLM...');
     const analysis = await analyze({

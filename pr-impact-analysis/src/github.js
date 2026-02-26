@@ -33,6 +33,7 @@ async function getPRData(token) {
     body: pr.body || '',
     author: pr.user.login,
     number: pullNumber,
+    branch: pr.head.ref,
     mergedAt: pr.merged_at,
     repo: `${owner}/${repo}`,
     prUrl: pr.html_url,
