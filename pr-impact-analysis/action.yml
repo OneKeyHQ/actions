@@ -39,11 +39,13 @@ inputs:
     required: false
 outputs:
   jira-issue-key:
-    description: 'Created Jira issue key, e.g. QA-123'
+    description: 'Created Jira issue key, e.g. QA-123 (empty if skipped)'
   jira-issue-url:
-    description: 'URL to the created Jira issue'
+    description: 'URL to the created Jira issue (empty if skipped)'
   analysis-summary:
     description: 'LLM generated impact analysis summary'
+  skipped:
+    description: 'Whether QA was skipped (true/false)'
 runs:
   using: 'node16'
   main: 'dist/index.js'

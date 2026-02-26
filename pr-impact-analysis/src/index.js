@@ -35,22 +35,29 @@ async function run() {
       model: llmModel,
       customPrompt,
     });
-    core.info(`Analysis complete. Risk: ${analysis.risk_level}, ${analysis.test_checklist.length} test items`);
+    core.info(`Analysis complete. Risk: ${analysis.risk_level}, skip_qa: ${analysis.skip_qa}`);
 
-    // 4. Create Jira issue
-    core.info('Step 3/3: Creating Jira issue...');
-    const { issueKey, issueUrl } = await createIssue({
-      analysis,
-      prData,
-      config: jiraConfig,
-    });
+    // 4. Conditionally create Jira issue
+    if (analysis.skip_qa) {
+      core.info(`Skipped QA: ${analysis.skip_reason}`);
+      core.info(`Summary: ${analysis.change_summary}`);
+      core.setOutput('jira-issue-key', '');
+      core.setOutput('jira-issue-url', '');
+      core.setOutput('skipped', 'true');
+    } else {
+      core.info('Step 3/3: Creating Jira issue...');
+      const { issueKey, issueUrl } = await createIssue({
+        analysis,
+        prData,
+        config: jiraConfig,
+      });
+      core.setOutput('jira-issue-key', issueKey);
+      core.setOutput('jira-issue-url', issueUrl);
+      core.setOutput('skipped', 'false');
+      core.info(`Done! Jira issue created: ${issueKey} — ${issueUrl}`);
+    }
 
-    // 5. Set outputs
-    core.setOutput('jira-issue-key', issueKey);
-    core.setOutput('jira-issue-url', issueUrl);
     core.setOutput('analysis-summary', analysis.change_summary);
-
-    core.info(`Done! Jira issue created: ${issueKey} — ${issueUrl}`);
   } catch (error) {
     core.setFailed(`Action failed: ${error.message}`);
   }
