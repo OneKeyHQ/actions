@@ -12,10 +12,10 @@ inputs:
     required: true
   llm-api-base-url:
     description: 'LLM API base URL (OpenAI-compatible)'
-    default: 'https://api.deepseek.com'
+    required: true
   llm-model:
     description: 'Model name'
-    default: 'deepseek-chat'
+    required: true
   jira-base-url:
     description: 'Jira instance URL, e.g. https://yourteam.atlassian.net'
     required: true

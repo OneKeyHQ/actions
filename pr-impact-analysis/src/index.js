@@ -8,8 +8,8 @@ async function run() {
     // 1. Read inputs
     const githubToken = core.getInput('github-token', { required: true });
     const llmApiKey = core.getInput('llm-api-key', { required: true });
-    const llmBaseUrl = core.getInput('llm-api-base-url') || 'https://api.deepseek.com';
-    const llmModel = core.getInput('llm-model') || 'deepseek-chat';
+    const llmBaseUrl = core.getInput('llm-api-base-url', { required: true });
+    const llmModel = core.getInput('llm-model', { required: true });
     const customPrompt = core.getInput('custom-prompt') || '';
 
     const jiraConfig = {

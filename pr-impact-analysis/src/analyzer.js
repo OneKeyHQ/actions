@@ -73,7 +73,7 @@ ${prData.diff}`;
 
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`;
 
-  core.info(`Calling LLM: ${model} at ${baseUrl}`);
+  core.info(`Calling LLM: ${model}`);
 
   const response = await callLLM(url, apiKey, model, systemPrompt, userMessage);
 
