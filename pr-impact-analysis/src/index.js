@@ -27,15 +27,16 @@ async function run() {
     core.info(`PR #${prData.number}: ${prData.title} (${prData.files.length} files changed)`);
 
     // 2.5. Check if Jira issue already exists (branch or title contains OK-XXXX)
-    const jiraKeyPattern = /OK-\d+/i;
+    const jiraKeyPattern = /ok[-_]?\d+/i;
     const existingKey = prData.branch.match(jiraKeyPattern)?.[0]
       || prData.title.match(jiraKeyPattern)?.[0];
     if (existingKey) {
-      core.info(`Jira issue ${existingKey.toUpperCase()} already linked, skipping analysis and creation.`);
-      core.setOutput('jira-issue-key', existingKey.toUpperCase());
+      const normalizedKey = 'OK-' + existingKey.replace(/^ok[-_]?/i, '');
+      core.info(`Jira issue ${normalizedKey} already linked, skipping analysis and creation.`);
+      core.setOutput('jira-issue-key', normalizedKey);
       core.setOutput('jira-issue-url', '');
       core.setOutput('skipped', 'true');
-      core.setOutput('analysis-summary', `Linked to existing issue ${existingKey.toUpperCase()}`);
+      core.setOutput('analysis-summary', `Linked to existing issue ${normalizedKey}`);
       return;
     }
 
