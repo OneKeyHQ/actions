@@ -17,7 +17,7 @@ async function run() {
       email: core.getInput('jira-email', { required: true }),
       apiToken: core.getInput('jira-api-token', { required: true }),
       projectKey: core.getInput('jira-project-key', { required: true }),
-      issueType: core.getInput('jira-issue-type') || 'Task',
+      issueType: core.getInput('jira-issue-type') || '测试 QA',
       assigneeId: core.getInput('jira-assignee-id') || '',
     };
 

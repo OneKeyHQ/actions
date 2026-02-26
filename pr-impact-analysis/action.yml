@@ -30,7 +30,7 @@ inputs:
     required: true
   jira-issue-type:
     description: 'Jira issue type to create'
-    default: 'Task'
+    default: '测试 QA'
   jira-assignee-id:
     description: 'Jira user account ID to assign the issue to'
     required: false
