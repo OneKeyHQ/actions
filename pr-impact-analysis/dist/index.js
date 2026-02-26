@@ -33421,12 +33421,10 @@ ${prData.diff}`;
 async function callLLM(url, apiKey, model, systemPrompt, userMessage) {
   const payload = {
     model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
-    ],
+    instructions: systemPrompt,
+    input: userMessage,
     temperature: 0.3,
-    response_format: { type: 'json_object' },
+    text: { format: { type: 'json_object' } },
   };
 
   try {
@@ -33438,7 +33436,7 @@ async function callLLM(url, apiKey, model, systemPrompt, userMessage) {
       timeout: 120000,
     });
 
-    return data.choices[0].message.content;
+    return data.output_text || data.output[0].content[0].text;
   } catch (error) {
     if (error.response) {
       const { status, data } = error.response;
