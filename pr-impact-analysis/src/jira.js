@@ -29,12 +29,21 @@ async function createIssue({ analysis, prData, config }) {
 
   core.info(`Creating Jira issue in project ${projectKey}`);
 
-  const { data } = await axios.post(url, payload, {
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  let data;
+  try {
+    const resp = await axios.post(url, payload, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    data = resp.data;
+  } catch (err) {
+    if (err.response) {
+      core.error(`Jira API error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+    }
+    throw err;
+  }
 
   const issueKey = data.key;
   const issueUrl = `${baseUrl.replace(/\/+$/, '')}/browse/${issueKey}`;
@@ -118,13 +127,15 @@ function bulletList(items) {
 }
 
 function taskList(items) {
+  if (!items || items.length === 0) {
+    return paragraph('无测试项');
+  }
+  // Fallback to bulletList with checkbox prefix for broader ADF compatibility
   return {
-    type: 'taskList',
-    attrs: { localId: 'checklist' },
-    content: items.map((item, i) => ({
-      type: 'taskItem',
-      attrs: { localId: `task-${i}`, state: 'TODO' },
-      content: [{ type: 'text', text: item }],
+    type: 'bulletList',
+    content: items.map(item => ({
+      type: 'listItem',
+      content: [paragraph(`☐ ${item}`)],
     })),
   };
 }
