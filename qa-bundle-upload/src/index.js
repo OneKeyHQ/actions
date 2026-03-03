@@ -182,7 +182,14 @@ async function run() {
     let hasFailure = false;
 
     for (const bundle of bundles) {
-      const meta = parseInfoFile(bundle.infoPath);
+      let meta;
+      try {
+        meta = parseInfoFile(bundle.infoPath);
+      } catch (error) {
+        hasFailure = true;
+        core.error(`[${path.basename(bundle.infoPath)}] ${error.message}`);
+        continue;
+      }
       const label = meta.platform;
 
       try {
@@ -193,7 +200,7 @@ async function run() {
         core.info(`[${label}] Uploading ${path.basename(bundle.zipPath)} (${fileSizeMB} MB, v${meta.appVersion})...`);
 
         const computedHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-        if (computedHash !== meta.sha256) {
+        if (computedHash !== meta.sha256.toLowerCase()) {
           throw new Error(`SHA256 mismatch: computed ${computedHash}, .info says ${meta.sha256}`);
         }
         core.info(`[${label}] SHA256: ${computedHash}`);
