@@ -16,15 +16,6 @@ function validateInputs({ filePath, appVersion, platform }) {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  // ZIP magic bytes
-  const fd = fs.openSync(filePath, 'r');
-  const header = Buffer.alloc(4);
-  fs.readSync(fd, header, 0, 4, 0);
-  fs.closeSync(fd);
-  if (!ZIP_MAGIC.every((b, i) => header[i] === b)) {
-    throw new Error(`Invalid file: not a ZIP archive (${filePath})`);
-  }
-
   // App version format
   if (!/^\d+\.\d+\.\d+$/.test(appVersion)) {
     throw new Error(`Invalid app-version format: "${appVersion}" (expected x.y.z)`);
@@ -33,6 +24,12 @@ function validateInputs({ filePath, appVersion, platform }) {
   // Platform
   if (!VALID_PLATFORMS.includes(platform)) {
     throw new Error(`Invalid platform: "${platform}" (expected: ${VALID_PLATFORMS.join(', ')})`);
+  }
+}
+
+function validateZipMagic(fileBuffer, filePath) {
+  if (!ZIP_MAGIC.every((b, i) => fileBuffer[i] === b)) {
+    throw new Error(`Invalid file: not a ZIP archive (${filePath})`);
   }
 }
 
@@ -64,34 +61,40 @@ function buildFormData(fileBuffer, filePath, fields) {
   return form;
 }
 
-async function uploadWithRetry(url, form, headers, maxRetries) {
+async function uploadWithRetry({ url, fileBuffer, filePath, fields, secret, maxRetries }) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       core.info(`Upload attempt ${attempt}/${maxRetries}...`);
+
+      // Fresh signature each attempt
+      const { timestamp, fileHash, signature } = computeSignature(fileBuffer, secret);
+
+      // Fresh form each attempt
+      const form = buildFormData(fileBuffer, filePath, fields);
+
       const response = await axios.post(url, form, {
         headers: {
           ...form.getHeaders(),
-          ...headers,
+          'X-Bundle-Timestamp': timestamp,
+          'X-Bundle-Signature': signature,
         },
         timeout: REQUEST_TIMEOUT_MS,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       });
-      return response.data;
+      return { data: response.data, fileHash };
     } catch (error) {
       lastError = error;
       const status = error.response?.status;
-      const isRetryable =
-        !status || // network error (no response)
-        status >= 500; // server error
+      const isRetryable = !status || status >= 500;
 
       if (!isRetryable || attempt === maxRetries) {
         throw error;
       }
 
-      const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      const delay = Math.pow(2, attempt) * 1000;
       core.warning(
         `Attempt ${attempt} failed (${status || error.code || error.message}), retrying in ${delay / 1000}s...`
       );
@@ -107,6 +110,7 @@ async function run() {
     // 1. Read inputs
     const serverUrl = core.getInput('server-url', { required: true }).replace(/\/$/, '');
     const secret = core.getInput('upload-secret', { required: true });
+    core.setSecret(secret);
     const filePath = core.getInput('file-path', { required: true });
     const appVersion = core.getInput('app-version', { required: true });
     const platform = core.getInput('platform', { required: true });
@@ -115,42 +119,35 @@ async function run() {
     const prTitle = core.getInput('pr-title') || '';
     const maxRetries = parseInt(core.getInput('max-retries') || '3', 10);
 
+    if (Number.isNaN(maxRetries) || maxRetries < 1) {
+      throw new Error(`Invalid max-retries value: "${core.getInput('max-retries')}" (expected positive integer)`);
+    }
+
     // 2. Validate
     core.info(`Uploading ${filePath} (platform: ${platform}, version: ${appVersion})`);
     validateInputs({ filePath, appVersion, platform });
 
-    // 3. Read file and compute signature
+    // 3. Read file and validate ZIP magic
     const fileBuffer = fs.readFileSync(filePath);
+    validateZipMagic(fileBuffer, filePath);
+
     const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
     core.info(`File size: ${fileSizeMB} MB`);
 
-    const { timestamp, fileHash, signature } = computeSignature(fileBuffer, secret);
-    core.info(`SHA256: ${fileHash}`);
-
-    // 4. Build form data
-    const form = buildFormData(fileBuffer, filePath, {
-      appVersion,
-      platform,
-      commitHash,
-      branch,
-      prTitle,
-    });
-
-    // 5. Upload with retry
+    // 4. Upload with retry (signature and form rebuilt per attempt)
     const uploadUrl = `${serverUrl}${UPLOAD_PATH}`;
     core.info(`Uploading to ${uploadUrl}`);
 
-    const result = await uploadWithRetry(
-      uploadUrl,
-      form,
-      {
-        'X-Bundle-Timestamp': timestamp,
-        'X-Bundle-Signature': signature,
-      },
-      maxRetries
-    );
+    const { data: result, fileHash } = await uploadWithRetry({
+      url: uploadUrl,
+      fileBuffer,
+      filePath,
+      fields: { appVersion, platform, commitHash, branch, prTitle },
+      secret,
+      maxRetries,
+    });
 
-    // 6. Set outputs
+    // 5. Set outputs
     core.setOutput('bundle-version', String(result.bundleVersion));
     core.setOutput('download-url', result.downloadUrl);
     core.setOutput('sha256', result.sha256 || fileHash);
