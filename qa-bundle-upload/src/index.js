@@ -33,14 +33,13 @@ function validateZipMagic(fileBuffer, filePath) {
   }
 }
 
-function computeSignature(fileBuffer, secret) {
+function computeSignature(fileHash, secret) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
   const signature = crypto
     .createHmac('sha256', secret)
     .update(`${timestamp}:${fileHash}`)
     .digest('hex');
-  return { timestamp, fileHash, signature };
+  return { timestamp, signature };
 }
 
 function buildFormData(fileBuffer, filePath, fields) {
@@ -61,15 +60,15 @@ function buildFormData(fileBuffer, filePath, fields) {
   return form;
 }
 
-async function uploadWithRetry({ url, fileBuffer, filePath, fields, secret, maxRetries }) {
+async function uploadWithRetry({ url, fileBuffer, filePath, fields, fileHash, secret, maxRetries }) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       core.info(`Upload attempt ${attempt}/${maxRetries}...`);
 
-      // Fresh signature each attempt
-      const { timestamp, fileHash, signature } = computeSignature(fileBuffer, secret);
+      // Fresh timestamp + HMAC each attempt (fileHash is constant)
+      const { timestamp, signature } = computeSignature(fileHash, secret);
 
       // Fresh form each attempt
       const form = buildFormData(fileBuffer, filePath, fields);
@@ -84,7 +83,7 @@ async function uploadWithRetry({ url, fileBuffer, filePath, fields, secret, maxR
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       });
-      return { data: response.data, fileHash };
+      return { data: response.data };
     } catch (error) {
       lastError = error;
       const status = error.response?.status;
@@ -134,20 +133,25 @@ async function run() {
     const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
     core.info(`File size: ${fileSizeMB} MB`);
 
-    // 4. Upload with retry (signature and form rebuilt per attempt)
+    // 4. Compute SHA256 once (file content never changes across retries)
+    const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    core.info(`SHA256: ${fileHash}`);
+
+    // 5. Upload with retry (timestamp + HMAC rebuilt per attempt)
     const uploadUrl = `${serverUrl}${UPLOAD_PATH}`;
     core.info(`Uploading to ${uploadUrl}`);
 
-    const { data: result, fileHash } = await uploadWithRetry({
+    const { data: result } = await uploadWithRetry({
       url: uploadUrl,
       fileBuffer,
       filePath,
       fields: { appVersion, platform, commitHash, branch, prTitle },
+      fileHash,
       secret,
       maxRetries,
     });
 
-    // 5. Set outputs
+    // 6. Set outputs
     core.setOutput('bundle-version', String(result.bundleVersion));
     core.setOutput('download-url', result.downloadUrl);
     core.setOutput('sha256', result.sha256 || fileHash);
