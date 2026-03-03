@@ -5,7 +5,7 @@ const core = require('@actions/core');
 const axios = require('axios');
 const FormData = require('form-data');
 
-const UPLOAD_PATH = '/v1/app-update/bundles/upload';
+const UPLOAD_PATH = '/utility/v1/app-update/bundles/upload';
 const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
 const VALID_PLATFORMS = ['android', 'ios', 'electron'];
 const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];

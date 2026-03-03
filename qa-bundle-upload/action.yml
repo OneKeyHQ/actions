@@ -5,7 +5,7 @@ branding:
   color: 'green'
 inputs:
   server-url:
-    description: 'Utility server URL, e.g. https://utility.onekey.so'
+    description: 'Utility server URL, e.g. https://utility.onekeytest.com'
     required: true
   upload-secret:
     description: 'HMAC-SHA256 signing secret (JS_BUNDLE_UPLOAD_SECRET)'
