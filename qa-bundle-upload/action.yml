@@ -1,5 +1,5 @@
 name: 'QA Bundle Upload'
-description: 'Upload JS Bundle ZIP to Utility server via HMAC-signed multipart POST for QA verification'
+description: 'Scan a directory for bundle ZIPs + .info metadata, then upload each to Utility server via HMAC-signed multipart POST'
 branding:
   icon: 'upload-cloud'
   color: 'green'
@@ -10,14 +10,8 @@ inputs:
   upload-secret:
     description: 'HMAC-SHA256 signing secret (JS_BUNDLE_UPLOAD_SECRET)'
     required: true
-  file-path:
-    description: 'Path to the bundle ZIP file'
-    required: true
-  app-version:
-    description: 'App version, format x.y.z'
-    required: true
-  platform:
-    description: 'Target platform: android, ios, or electron'
+  bundle-dir:
+    description: 'Directory containing *-bundle.zip and *.info files'
     required: true
   commit-hash:
     description: 'Git commit hash'
@@ -34,14 +28,8 @@ inputs:
     required: false
     default: '3'
 outputs:
-  bundle-version:
-    description: 'Server-assigned bundle version number'
-  download-url:
-    description: 'CDN download URL for the uploaded bundle'
-  sha256:
-    description: 'SHA256 hash of the uploaded file'
-  file-size:
-    description: 'File size in bytes'
+  results:
+    description: 'JSON array of upload results: [{ platform, bundleVersion, downloadUrl, sha256, fileSize }]'
 runs:
   using: 'node20'
   main: 'dist/index.js'
