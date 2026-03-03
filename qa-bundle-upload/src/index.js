@@ -41,8 +41,14 @@ function scanBundleDir(dirPath) {
 
 function parseInfoFile(infoPath) {
   let raw;
+  let content;
   try {
-    raw = JSON.parse(fs.readFileSync(infoPath, 'utf8'));
+    content = fs.readFileSync(infoPath, 'utf8');
+  } catch (e) {
+    throw new Error(`${path.basename(infoPath)}: cannot read file — ${e.message}`);
+  }
+  try {
+    raw = JSON.parse(content);
   } catch (e) {
     throw new Error(`${path.basename(infoPath)}: invalid JSON — ${e.message}`);
   }
@@ -51,6 +57,14 @@ function parseInfoFile(infoPath) {
     if (!raw[field]) {
       throw new Error(`${path.basename(infoPath)}: missing required field "${field}"`);
     }
+  }
+
+  if (!/^[0-9a-f]{64}$/i.test(raw.sha256)) {
+    throw new Error(`${path.basename(infoPath)}: invalid sha256 format`);
+  }
+
+  if (!/^\d+\.\d+\.\d+$/.test(raw.appVersion)) {
+    throw new Error(`${path.basename(infoPath)}: invalid appVersion format "${raw.appVersion}" (expected x.y.z)`);
   }
 
   if (!VALID_PLATFORMS.includes(raw.appType)) {
@@ -91,7 +105,9 @@ function buildFormData(fileBuffer, fileName, fields) {
   });
   form.append('appVersion', fields.appVersion);
   form.append('platform', fields.platform);
-  form.append('commitHash', fields.commitHash);
+  if (fields.commitHash) {
+    form.append('commitHash', fields.commitHash);
+  }
   if (fields.branch) {
     form.append('branch', fields.branch);
   }
@@ -192,6 +208,10 @@ async function run() {
           maxRetries,
           label,
         });
+
+        if (!result.bundleVersion || !result.downloadUrl) {
+          throw new Error(`Server response missing required fields: ${JSON.stringify(result)}`);
+        }
 
         const entry = {
           platform: meta.platform,
