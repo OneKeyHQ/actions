@@ -1,0 +1,47 @@
+name: 'QA Bundle Upload'
+description: 'Upload JS Bundle ZIP to Utility server via HMAC-signed multipart POST for QA verification'
+branding:
+  icon: 'upload-cloud'
+  color: 'green'
+inputs:
+  server-url:
+    description: 'Utility server URL, e.g. https://utility.onekey.so'
+    required: true
+  upload-secret:
+    description: 'HMAC-SHA256 signing secret (JS_BUNDLE_UPLOAD_SECRET)'
+    required: true
+  file-path:
+    description: 'Path to the bundle ZIP file'
+    required: true
+  app-version:
+    description: 'App version, format x.y.z'
+    required: true
+  platform:
+    description: 'Target platform: android, ios, or electron'
+    required: true
+  commit-hash:
+    description: 'Git commit hash'
+    required: false
+    default: ${{ github.sha }}
+  branch:
+    description: 'Git branch name'
+    required: false
+  pr-title:
+    description: 'Pull request title'
+    required: false
+  max-retries:
+    description: 'Maximum retry attempts (including first try)'
+    required: false
+    default: '3'
+outputs:
+  bundle-version:
+    description: 'Server-assigned bundle version number'
+  download-url:
+    description: 'CDN download URL for the uploaded bundle'
+  sha256:
+    description: 'SHA256 hash of the uploaded file'
+  file-size:
+    description: 'File size in bytes'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
