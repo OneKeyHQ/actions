@@ -127,12 +127,18 @@ async function uploadWithRetry({ url, fileBuffer, fileName, fields, fileHash, se
       const { timestamp, signature } = computeSignature(fileHash, secret);
       const form = buildFormData(fileBuffer, fileName, fields);
 
+      const requestHeaders = {
+        ...form.getHeaders(),
+        'X-Bundle-Timestamp': timestamp,
+        'X-Bundle-Signature': signature,
+      };
+
+      core.info(`[${label}] Request URL: ${url}`);
+      const safeHeaders = { ...requestHeaders, 'X-Bundle-Signature': requestHeaders['X-Bundle-Signature'].slice(0, 8) + '...' };
+      core.info(`[${label}] Request headers: ${JSON.stringify(safeHeaders, null, 2)}`);
+
       const response = await axios.post(url, form, {
-        headers: {
-          ...form.getHeaders(),
-          'X-Bundle-Timestamp': timestamp,
-          'X-Bundle-Signature': signature,
-        },
+        headers: requestHeaders,
         timeout: REQUEST_TIMEOUT_MS,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
