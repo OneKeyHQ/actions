@@ -211,7 +211,7 @@ async function run() {
         }
         core.info(`[${label}] SHA256: ${computedHash}`);
 
-        const { data: result } = await uploadWithRetry({
+        const { data: responseBody } = await uploadWithRetry({
           url: uploadUrl,
           fileBuffer,
           fileName: path.basename(bundle.zipPath),
@@ -222,8 +222,13 @@ async function run() {
           label,
         });
 
-        if (!result.bundleVersion || !result.downloadUrl) {
-          throw new Error(`Server response missing required fields: ${JSON.stringify(result)}`);
+        if (responseBody.code !== 0) {
+          throw new Error(`Server returned error: ${JSON.stringify(responseBody)}`);
+        }
+
+        const result = responseBody.data;
+        if (!result || !result.bundleVersion || !result.downloadUrl) {
+          throw new Error(`Server response missing required fields: ${JSON.stringify(responseBody)}`);
         }
 
         const entry = {
