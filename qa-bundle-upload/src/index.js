@@ -79,6 +79,8 @@ function parseInfoFile(infoPath) {
     sha256: raw.sha256,
     fileName: raw.fileName,
     size: raw.size,
+    buildNumber: raw.buildNumber || '',
+    bundleVersion: raw.bundleVersion || '',
   };
 }
 
@@ -113,6 +115,12 @@ function buildFormData(fileBuffer, fileName, fields) {
   }
   if (fields.prTitle) {
     form.append('prTitle', fields.prTitle);
+  }
+  if (fields.buildNumber) {
+    form.append('buildNumber', fields.buildNumber);
+  }
+  if (fields.bundleVersion) {
+    form.append('bundleVersion', fields.bundleVersion);
   }
   return form;
 }
@@ -215,7 +223,15 @@ async function run() {
           url: uploadUrl,
           fileBuffer,
           fileName: path.basename(bundle.zipPath),
-          fields: { appVersion: meta.appVersion, platform: meta.platform, commitHash, branch, prTitle },
+          fields: {
+            appVersion: meta.appVersion,
+            platform: meta.platform,
+            commitHash,
+            branch,
+            prTitle,
+            buildNumber: meta.buildNumber,
+            bundleVersion: meta.bundleVersion,
+          },
           fileHash: computedHash,
           secret,
           maxRetries,
