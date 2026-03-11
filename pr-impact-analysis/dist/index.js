@@ -33333,180 +33333,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 3096:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const axios = __nccwpck_require__(8757);
-const core = __nccwpck_require__(2186);
-
-const SYSTEM_PROMPT = `你是一个资深 QA 工程师，负责判断代码变更是否需要 QA 测试，如果需要则制定测试计划。
-
-## 输出格式
-输出严格的 JSON（不要包含 markdown 代码块标记）：
-
-{
-  "skip_qa": true | false,
-  "skip_reason": "跳过原因（skip_qa 为 true 时必填）",
-  "risk_level": "high" | "medium" | "low",
-  "affected_modules": ["模块名"],
-  "change_summary": "一句话说清楚改了什么",
-  "impact_analysis": "哪些功能可能受影响，为什么",
-  "test_checklist": [
-    "具体的测试步骤1",
-    "具体的测试步骤2"
-  ],
-  "regression_areas": ["需要回归测试的区域"],
-  "notes": "其他 QA 需要注意的事项"
-}
-
-## 不需要 QA 的变更（skip_qa: true）
-以下类型的变更通常不影响用户可见行为，不需要创建 QA 任务：
-- **国际化 (i18n)**：纯翻译文件的增删改（locale 相关），除非涉及关键业务文案的逻辑变更
-- **依赖变更**：package.json、lock 文件变更，除非是核心依赖的大版本升级
-- **Patch 文件**：patches/ 目录下的变更
-- **纯工程改动**：CI/CD 配置、lint 规则、tsconfig、构建脚本、开发工具配置、Dockerfile 等
-- **文档**：README、CHANGELOG、注释、JSDoc
-- **代码格式化**：纯 formatting、import 排序等不影响运行时行为的变更
-- **纯类型定义**：仅 TypeScript 类型修改，不影响运行时逻辑
-- **测试代码**：仅修改测试文件，不涉及源码变更
-
-## 需要 QA 的变更（skip_qa: false）
-- 用户可见的 UI / 交互变更
-- 业务逻辑修改
-- API 调用或数据流变更
-- 数据处理 / 存储逻辑变更
-- 权限 / 安全相关变更
-- 核心依赖的大版本升级
-
-## 原则
-- 说人话，QA 能直接照着测
-- test_checklist 要具体到操作步骤，不要笼统的"测试XX功能"
-- risk_level 基于变更范围、是否涉及核心逻辑、是否有数据变更来判断
-- 如果 diff 被截断，基于文件名和可见部分做合理推断，并在 notes 里说明
-- 当 skip_qa 为 true 时，test_checklist 可以为空数组，但仍需填写 change_summary 和 risk_level
-
-## 输出要求
-- 禁止套话、禁止重复 PR 标题、禁止"可能会影响"之类的模糊表述
-- change_summary 直接说动作+对象，如"Token 详情页底部按钮改为条件渲染"
-- impact_analysis 直接说受影响的用户操作，如"用户在 Token 详情页可能看不到交易按钮"
-- affected_modules 只写模块名，不加描述
-- diff 被截断时在 impact_analysis 末尾注明`;
-
-function toArray(value) {
-  if (Array.isArray(value)) return value;
-  if (value == null) return [];
-  if (typeof value === 'string') return value ? [value] : [];
-  return [String(value)];
-}
-
-async function analyze({ prData, apiKey, baseUrl, model, customPrompt }) {
-  const systemPrompt = customPrompt
-    ? `${SYSTEM_PROMPT}\n\n## 项目补充信息\n${customPrompt}`
-    : SYSTEM_PROMPT;
-
-  const userMessage = `## PR 信息
-- 标题: ${prData.title}
-- 描述: ${prData.body || '无'}
-- 作者: ${prData.author}
-- 标签: ${prData.labels.join(', ') || '无'}
-
-## 变更文件列表
-${prData.files.map(f => `- [${f.status}] ${f.filename}`).join('\n')}
-
-## Diff 内容
-${prData.diff}
-
-请按要求输出 JSON。`;
-
-  const url = baseUrl.replace(/\/+$/, '');
-
-  core.info(`Calling LLM: ${model}`);
-
-  const response = await callLLM(url, apiKey, model, systemPrompt, userMessage);
-
-  return parseLLMResponse(response);
-}
-
-async function callLLM(url, apiKey, model, systemPrompt, userMessage) {
-  const payload = {
-    model,
-    instructions: systemPrompt,
-    input: userMessage,
-    temperature: 0.3,
-    text: { format: { type: 'json_object' } },
-  };
-
-  try {
-    const { data } = await axios.post(url, payload, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 120000,
-    });
-
-    return data.output_text || data.output[0].content[0].text;
-  } catch (error) {
-    if (error.response) {
-      const { status, data } = error.response;
-      const detail = typeof data === 'string' ? data : JSON.stringify(data);
-      throw new Error(`LLM API error ${status}: ${detail}`);
-    }
-    throw error;
-  }
-}
-
-function parseLLMResponse(raw) {
-  let content = raw.trim();
-  // Strip markdown code fences if present
-  content = content.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-
-  try {
-    const parsed = JSON.parse(content);
-
-    // Validate required fields
-    const required = ['risk_level', 'change_summary', 'test_checklist'];
-    for (const field of required) {
-      if (!(field in parsed)) {
-        throw new Error(`Missing required field: ${field}`);
-      }
-    }
-
-    return {
-      skip_qa: Boolean(parsed.skip_qa),
-      skip_reason: parsed.skip_reason || '',
-      risk_level: parsed.risk_level || 'medium',
-      affected_modules: toArray(parsed.affected_modules),
-      change_summary: parsed.change_summary || '',
-      impact_analysis: parsed.impact_analysis || '',
-      test_checklist: toArray(parsed.test_checklist),
-      regression_areas: toArray(parsed.regression_areas),
-      notes: parsed.notes || '',
-    };
-  } catch (error) {
-    core.warning(`Failed to parse LLM response: ${error.message}`);
-    core.warning(`Raw response: ${content.substring(0, 500)}`);
-
-    // Fallback: return raw content as change_summary
-    return {
-      skip_qa: false,
-      skip_reason: '',
-      risk_level: 'medium',
-      affected_modules: [],
-      change_summary: content.substring(0, 500),
-      impact_analysis: 'LLM 响应解析失败，请查看原始输出',
-      test_checklist: ['手动检查 PR 变更内容并制定测试计划'],
-      regression_areas: [],
-      notes: `原始 LLM 输出:\n${content}`,
-    };
-  }
-}
-
-module.exports = { analyze };
-
-
-/***/ }),
-
 /***/ 8396:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -33589,128 +33415,6 @@ function buildDiff(files) {
 }
 
 module.exports = { getPRData };
-
-
-/***/ }),
-
-/***/ 3845:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const axios = __nccwpck_require__(8757);
-const core = __nccwpck_require__(2186);
-
-async function createIssue({ analysis, prData, config }) {
-  const { baseUrl, email, apiToken, projectKey, issueType, assigneeId } = config;
-
-  const summary = `[PR 分析] ${prData.title} #${prData.number}`;
-  const description = buildADF(analysis, prData);
-
-  const riskLabel = `risk-${analysis.risk_level}`;
-  const labels = ['auto-analysis', riskLabel];
-
-  const payload = {
-    fields: {
-      project: { key: projectKey },
-      summary,
-      description,
-      issuetype: { name: issueType },
-      labels,
-    },
-  };
-
-  if (assigneeId) {
-    payload.fields.assignee = { accountId: assigneeId };
-  }
-
-  const url = `${baseUrl.replace(/\/+$/, '')}/rest/api/3/issue`;
-  const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
-
-  core.info(`Creating Jira issue in project ${projectKey}`);
-
-  let data;
-  try {
-    const resp = await axios.post(url, payload, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    data = resp.data;
-  } catch (err) {
-    if (err.response) {
-      core.error(`Jira API error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
-    }
-    throw err;
-  }
-
-  const issueKey = data.key;
-  const issueUrl = `${baseUrl.replace(/\/+$/, '')}/browse/${issueKey}`;
-
-  core.info(`Created Jira issue: ${issueKey} (${issueUrl})`);
-
-  return { issueKey, issueUrl };
-}
-
-function buildADF(analysis, prData) {
-  const riskEmoji = { high: '🔴 高', medium: '🟡 中', low: '🟢 低' };
-  const risk = riskEmoji[analysis.risk_level] || '🟡 中';
-
-  // Jira Cloud uses Atlassian Document Format (ADF)
-  return {
-    version: 1,
-    type: 'doc',
-    content: [
-      heading('变更概述'),
-      paragraph(analysis.change_summary),
-      paragraph(`PR: ${prData.repo}#${prData.number} | 作者: ${prData.author} | 合并时间: ${prData.mergedAt || 'N/A'}`),
-      rule(),
-
-      heading('影响范围'),
-      paragraph(`风险等级: ${risk}`),
-      heading('受影响模块', 3),
-      bulletList(analysis.affected_modules.length > 0
-        ? analysis.affected_modules
-        : ['无特定模块']),
-      heading('影响分析', 3),
-      paragraph(analysis.impact_analysis || '无'),
-      rule(),
-      paragraph(`由 GitHub Action 自动创建 | 查看 PR: ${prData.prUrl}`),
-    ],
-  };
-}
-
-// --- ADF helper functions ---
-
-function heading(text, level = 2) {
-  return {
-    type: 'heading',
-    attrs: { level },
-    content: [{ type: 'text', text }],
-  };
-}
-
-function paragraph(text) {
-  return {
-    type: 'paragraph',
-    content: [{ type: 'text', text }],
-  };
-}
-
-function rule() {
-  return { type: 'rule' };
-}
-
-function bulletList(items) {
-  return {
-    type: 'bulletList',
-    content: items.map(item => ({
-      type: 'listItem',
-      content: [paragraph(item)],
-    })),
-  };
-}
-
-module.exports = { createIssue };
 
 
 /***/ }),
@@ -40970,79 +40674,48 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(2186);
 const { getPRData } = __nccwpck_require__(8396);
-const { analyze } = __nccwpck_require__(3096);
-const { createIssue } = __nccwpck_require__(3845);
+const axios = __nccwpck_require__(8757);
 
 async function run() {
   try {
-    // 1. Read inputs
     const githubToken = core.getInput('github-token', { required: true });
-    const llmApiKey = core.getInput('llm-api-key', { required: true });
-    const llmBaseUrl = core.getInput('llm-api-base-url', { required: true });
-    const llmModel = core.getInput('llm-model', { required: true });
-    const customPrompt = core.getInput('custom-prompt') || '';
+    const workerUrl = core.getInput('worker-url', { required: true });
+    const workerSecret = core.getInput('worker-secret', { required: true });
 
-    const jiraConfig = {
-      baseUrl: core.getInput('jira-base-url', { required: true }),
-      email: core.getInput('jira-email', { required: true }),
-      apiToken: core.getInput('jira-api-token', { required: true }),
-      projectKey: core.getInput('jira-project-key', { required: true }),
-      issueType: core.getInput('jira-issue-type') || '测试 QA',
-      assigneeId: core.getInput('jira-assignee-id') || '',
-    };
-
-    // 2. Fetch PR data and diff
-    core.info('Step 1/3: Fetching PR data...');
+    // 1. Fetch PR data
+    core.info('Step 1/2: Fetching PR data...');
     const prData = await getPRData(githubToken);
     core.info(`PR #${prData.number}: ${prData.title} (${prData.files.length} files changed)`);
 
-    // 2.5. Check if Jira issue already exists (branch or title contains OK-XXXX)
-    const jiraKeyPattern = /ok[-_]?\d+/i;
-    const existingKey = prData.branch.match(jiraKeyPattern)?.[0]
-      || prData.title.match(jiraKeyPattern)?.[0];
-    if (existingKey) {
-      const normalizedKey = 'OK-' + existingKey.replace(/^ok[-_]?/i, '');
-      core.info(`Jira issue ${normalizedKey} already linked, skipping analysis and creation.`);
-      core.setOutput('jira-issue-key', normalizedKey);
-      core.setOutput('jira-issue-url', '');
-      core.setOutput('skipped', 'true');
-      core.setOutput('analysis-summary', `Linked to existing issue ${normalizedKey}`);
-      return;
-    }
-
-    // 3. Analyze via LLM
-    core.info('Step 2/3: Analyzing impact via LLM...');
-    const analysis = await analyze({
-      prData,
-      apiKey: llmApiKey,
-      baseUrl: llmBaseUrl,
-      model: llmModel,
-      customPrompt,
+    // 2. Send to Worker
+    core.info('Step 2/2: Sending to analysis worker...');
+    const { data } = await axios.post(workerUrl, prData, {
+      headers: {
+        'Authorization': `Bearer ${workerSecret}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 180000,
     });
-    core.info(`Analysis complete. Risk: ${analysis.risk_level}, skip_qa: ${analysis.skip_qa}`);
 
-    // 4. Conditionally create Jira issue
-    if (analysis.skip_qa) {
-      core.info(`Skipped QA: ${analysis.skip_reason}`);
-      core.info(`Summary: ${analysis.change_summary}`);
-      core.setOutput('jira-issue-key', '');
-      core.setOutput('jira-issue-url', '');
-      core.setOutput('skipped', 'true');
-    } else {
-      core.info('Step 3/3: Creating Jira issue...');
-      const { issueKey, issueUrl } = await createIssue({
-        analysis,
-        prData,
-        config: jiraConfig,
-      });
-      core.setOutput('jira-issue-key', issueKey);
-      core.setOutput('jira-issue-url', issueUrl);
-      core.setOutput('skipped', 'false');
-      core.info(`Done! Jira issue created: ${issueKey} — ${issueUrl}`);
+    if (!data.success) {
+      throw new Error(`Worker error: ${data.error}`);
     }
 
-    core.setOutput('analysis-summary', analysis.change_summary);
+    // 3. Set outputs
+    core.setOutput('jira-issue-key', data.jiraIssueKey || '');
+    core.setOutput('jira-issue-url', data.jiraIssueUrl || '');
+    core.setOutput('analysis-summary', data.analysisSummary || '');
+    core.setOutput('skipped', String(data.skipped));
+
+    if (data.skipped) {
+      core.info(`Skipped (${data.skipReason}): ${data.analysisSummary}`);
+    } else {
+      core.info(`Done! Jira issue created: ${data.jiraIssueKey} — ${data.jiraIssueUrl}`);
+    }
   } catch (error) {
+    if (error.response) {
+      core.error(`Worker HTTP ${error.response.status}: ${JSON.stringify(error.response.data)}`);
+    }
     core.setFailed(`Action failed: ${error.message}`);
   }
 }
