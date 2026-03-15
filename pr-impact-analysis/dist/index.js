@@ -40701,15 +40701,21 @@ async function run() {
       throw new Error(`Worker error: ${data.error}`);
     }
 
-    // 3. Set outputs
-    core.setOutput('jira-issue-key', data.jiraIssueKey || '');
-    core.setOutput('jira-issue-url', data.jiraIssueUrl || '');
+    // 3. Validate and set outputs
+    const skipped = data.skipped === true;
+    core.setOutput('skipped', String(skipped));
     core.setOutput('analysis-summary', data.analysisSummary || '');
-    core.setOutput('skipped', String(data.skipped));
 
-    if (data.skipped) {
+    if (skipped) {
+      core.setOutput('jira-issue-key', '');
+      core.setOutput('jira-issue-url', '');
       core.info(`Skipped (${data.skipReason}): ${data.analysisSummary}`);
     } else {
+      if (!data.jiraIssueKey || !data.jiraIssueUrl) {
+        throw new Error('Worker returned success but missing Jira issue key/url');
+      }
+      core.setOutput('jira-issue-key', data.jiraIssueKey);
+      core.setOutput('jira-issue-url', data.jiraIssueUrl);
       core.info(`Done! Jira issue created: ${data.jiraIssueKey} — ${data.jiraIssueUrl}`);
     }
   } catch (error) {
