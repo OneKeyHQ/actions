@@ -16,6 +16,8 @@ async function run() {
       bundleVersion: core.getInput('artifact-bundle-version'),
       skipGpg: core.getInput('artifact-skip-gpg'),
       buildSource: core.getInput('artifact-build-source'),
+      branch: core.getInput('artifact-branch'),
+      commit: core.getInput('artifact-commit'),
     };
 
 

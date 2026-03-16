@@ -37,6 +37,14 @@ inputs:
     description: 'Build source identifier (daily-build / bundle-release)'
     required: false
     default: 'daily-build'
+  artifact-branch:
+    description: 'Git branch name'
+    required: false
+    default: ''
+  artifact-commit:
+    description: 'Git commit SHA'
+    required: false
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'
