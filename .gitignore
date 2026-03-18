@@ -113,3 +113,6 @@ dist
 
 # pr-impact-analysis
 !pr-impact-analysis/dist
+
+# qa-bundle-upload
+!qa-bundle-upload/dist

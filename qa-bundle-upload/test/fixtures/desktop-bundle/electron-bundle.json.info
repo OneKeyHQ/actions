@@ -1,0 +1,10 @@
+{
+  "fileName": "electron-bundle.zip",
+  "sha256": "ae060b9b72c8613192dcd0a5711d32d08d2a0d5cdf8e684505cf86e4f51c627d",
+  "size": 108,
+  "generatedAt": "2026-03-03T05:58:01.923Z",
+  "appType": "electron",
+  "appVersion": "6.1.0",
+  "buildNumber": "2026030235",
+  "bundleVersion": "2"
+}

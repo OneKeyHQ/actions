@@ -1,0 +1,35 @@
+name: 'QA Bundle Upload'
+description: 'Scan a directory for bundle ZIPs + .info metadata, then upload each to Utility server via HMAC-signed multipart POST'
+branding:
+  icon: 'upload-cloud'
+  color: 'green'
+inputs:
+  server-url:
+    description: 'Utility server URL, e.g. https://utility.onekeytest.com'
+    required: true
+  upload-secret:
+    description: 'HMAC-SHA256 signing secret (JS_BUNDLE_UPLOAD_SECRET)'
+    required: true
+  bundle-dir:
+    description: 'Directory containing *-bundle.zip and *.info files'
+    required: true
+  commit-hash:
+    description: 'Git commit hash'
+    required: false
+    default: ${{ github.sha }}
+  branch:
+    description: 'Git branch name'
+    required: false
+  pr-title:
+    description: 'Pull request title'
+    required: false
+  max-retries:
+    description: 'Maximum retry attempts (including first try)'
+    required: false
+    default: '3'
+outputs:
+  results:
+    description: 'JSON array of upload results: [{ platform, bundleVersion, downloadUrl, sha256, fileSize }]'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
