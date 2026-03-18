@@ -25,6 +25,26 @@ inputs:
   artifact-download-url:
     description: 'Download URL of the artifact'
     required: true
+  artifact-bundle-version:
+    description: 'Bundle version number'
+    required: false
+    default: ''
+  artifact-skip-gpg:
+    description: 'Whether GPG verification is skipped (true/false)'
+    required: false
+    default: ''
+  artifact-build-source:
+    description: 'Build source identifier (daily-build / bundle-release)'
+    required: false
+    default: 'daily-build'
+  artifact-branch:
+    description: 'Git branch name'
+    required: false
+    default: ''
+  artifact-commit:
+    description: 'Git commit SHA'
+    required: false
+    default: ''
 runs:
   using: 'node16'
   main: 'dist/index.js'
