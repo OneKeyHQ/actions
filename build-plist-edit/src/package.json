@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@actions/core": "^1.9.1",
-    "@expo/json-file": "^8.2.34",
+    "@expo/json-file": "^8.3.3",
     "@expo/plist": "^0.0.17",
     "fs-extra": "^10.0.1",
     "minimist": "^1.2.6"
