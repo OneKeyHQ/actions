@@ -14,7 +14,7 @@
     "@expo/json-file": "^8.2.34",
     "@expo/plist": "^0.0.17",
     "fs-extra": "^10.0.1",
-    "minimist": "^1.2.6"
+    "minimist": "^1.2.8"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
