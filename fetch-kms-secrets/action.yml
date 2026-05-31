@@ -1,0 +1,41 @@
+name: 'Fetch KMS Secrets'
+description: 'Exchange GitHub OIDC for Volcengine STS, fetch a KMS secret, hybrid-decrypt (AES-256-GCM + RSA-OAEP-SHA256) to JSON k/v, expose to subsequent steps.'
+author: 'OneKey'
+branding:
+  icon: 'lock'
+  color: 'purple'
+
+inputs:
+  volc-account-id:
+    description: 'Volcengine account ID. Used as the OIDC token audience.'
+    required: true
+  volc-role-trn:
+    description: 'TRN of the IAM role to assume via OIDC.'
+    required: true
+  volc-kms-region:
+    description: 'Volcengine KMS region, e.g. cn-beijing. No default — must be set explicitly.'
+    required: true
+  secret-names:
+    description: 'KMS secret names to fetch. One per line.'
+    required: true
+  decrypt-private-key:
+    description: 'PEM-encoded RSA private key that unwraps the AES key (RSA-OAEP-SHA256).'
+    required: true
+
+outputs:
+  fetched-keys:
+    description: 'JSON array of env-var key names written to $GITHUB_ENV. Values are never exposed.'
+    value: ${{ steps.fetch.outputs.fetched-keys }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: fetch
+      shell: bash
+      env:
+        VOLC_ACCOUNT_ID: ${{ inputs.volc-account-id }}
+        VOLC_ROLE_TRN: ${{ inputs.volc-role-trn }}
+        VOLC_KMS_REGION: ${{ inputs.volc-kms-region }}
+        KMS_SECRET_NAMES: ${{ inputs.secret-names }}
+        KMS_DECRYPT_PRIVATE_KEY: ${{ inputs.decrypt-private-key }}
+      run: node "${GITHUB_ACTION_PATH}/scripts/fetch-and-decrypt.js"
