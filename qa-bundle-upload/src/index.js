@@ -6,7 +6,16 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 const UPLOAD_PATH = '/utility/v1/app-update/bundles/upload';
-const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+// Healthy uploads finish in well under 10s and the gateway in front of the
+// server gives up after ~30s, so this only bounds a connection that never answers.
+const REQUEST_TIMEOUT_MS = 2 * 60 * 1000;
+const RETRY_BASE_DELAY_MS = 2 * 1000;
+const RETRY_MAX_DELAY_MS = 30 * 1000;
+// The utility server answers application errors with HTTP 200 and `{ code, message }`.
+// 40000 is its uncaught-error code ("Something went wrong. Try again.").
+const SERVER_UNCAUGHT_ERROR_CODE = 40000;
+// Response headers that let the server side find a failed request in edge logs.
+const TRACE_HEADERS = ['cf-ray', 'x-request-id', 'server'];
 const VALID_PLATFORMS = ['android', 'ios', 'electron'];
 const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
 const INFO_REQUIRED_FIELDS = ['appVersion', 'appType', 'sha256'];
@@ -125,13 +134,63 @@ function buildFormData(fileBuffer, fileName, fields) {
   return form;
 }
 
-async function uploadWithRetry({ url, fileBuffer, fileName, fields, fileHash, secret, maxRetries, label }) {
-  let lastError;
+class ServerResponseError extends Error {
+  constructor(body) {
+    super(`Server returned error: ${JSON.stringify(body)}`);
+    this.name = 'ServerResponseError';
+    this.body = body;
+  }
+}
 
+// Non-2xx statuses never come from the utility app itself (see
+// SERVER_UNCAUGHT_ERROR_CODE); they come from the edge in front of it. The
+// gateway answers 408 when it stops waiting for the request body and 5xx/52x
+// when the connection is reset. No status means a network error or client
+// timeout. Retrying is safe: the server keys bundles by commit hash and
+// overwrites the same storage object.
+function isRetryableError(error) {
+  if (error instanceof ServerResponseError) {
+    return error.body?.code === SERVER_UNCAUGHT_ERROR_CODE;
+  }
+  const status = error.response?.status;
+  return !status || status === 408 || status >= 500;
+}
+
+function getRetryDelayMs(attempt, baseDelayMs = RETRY_BASE_DELAY_MS) {
+  const backoff = Math.min(baseDelayMs * 2 ** (attempt - 1), RETRY_MAX_DELAY_MS);
+  // Jitter keeps the parallel iOS/Android/desktop jobs from retrying in lockstep.
+  return Math.round(backoff * (0.5 + Math.random() * 0.5));
+}
+
+function describeFailure(error) {
+  const { response } = error;
+  if (error instanceof ServerResponseError || !response) {
+    return error.code ? `${error.code}: ${error.message}` : error.message;
+  }
+  const raw = typeof response.data === 'string' ? response.data : JSON.stringify(response.data);
+  const body = raw?.replace(/\s+/g, ' ').trim();
+  const trace = TRACE_HEADERS.filter((name) => response.headers?.[name]).map(
+    (name) => `${name}=${response.headers[name]}`
+  );
+  return [`HTTP ${response.status}`, body && `body=${body.slice(0, 200)}`, ...trace].filter(Boolean).join(', ');
+}
+
+async function uploadWithRetry({
+  url,
+  fileBuffer,
+  fileName,
+  fields,
+  fileHash,
+  secret,
+  maxRetries,
+  label,
+  baseDelayMs = RETRY_BASE_DELAY_MS,
+}) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      core.info(`[${label}] Upload attempt ${attempt}/${maxRetries}...`);
+    core.info(`[${label}] Upload attempt ${attempt}/${maxRetries}...`);
+    const startedAt = Date.now();
 
+    try {
       const { timestamp, signature } = computeSignature(fileHash, secret);
       const form = buildFormData(fileBuffer, fileName, fields);
 
@@ -151,25 +210,31 @@ async function uploadWithRetry({ url, fileBuffer, fileName, fields, fileHash, se
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       });
-      return { data: response.data };
-    } catch (error) {
-      lastError = error;
-      const status = error.response?.status;
-      const isRetryable = !status || status >= 500;
 
-      if (!isRetryable || attempt === maxRetries) {
-        throw error;
+      if (response.data?.code !== 0) {
+        throw new ServerResponseError(response.data);
+      }
+      return response.data;
+    } catch (error) {
+      const elapsedSeconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+      const summary = `${describeFailure(error)} (after ${elapsedSeconds}s)`;
+
+      if (!isRetryableError(error)) {
+        throw new Error(`attempt ${attempt}/${maxRetries} failed with a non-retryable error: ${summary}`);
+      }
+      if (attempt === maxRetries) {
+        throw new Error(`all ${maxRetries} attempts failed, last error: ${summary}`);
       }
 
-      const delay = Math.pow(2, attempt) * 1000;
+      const delay = getRetryDelayMs(attempt, baseDelayMs);
       core.warning(
-        `[${label}] Attempt ${attempt} failed (${status || error.code || error.message}), retrying in ${delay / 1000}s...`
+        `[${label}] Attempt ${attempt}/${maxRetries} failed: ${summary}. Retrying in ${(delay / 1000).toFixed(1)}s...`
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  throw lastError;
+  throw new Error(`Invalid max-retries: ${maxRetries}`);
 }
 
 async function run() {
@@ -181,7 +246,7 @@ async function run() {
     const commitHash = core.getInput('commit-hash') || process.env.GITHUB_SHA;
     const branch = core.getInput('branch') || '';
     const prTitle = core.getInput('pr-title') || '';
-    const maxRetries = parseInt(core.getInput('max-retries') || '3', 10);
+    const maxRetries = parseInt(core.getInput('max-retries') || '5', 10);
 
     if (Number.isNaN(maxRetries) || maxRetries < 1) {
       throw new Error(`Invalid max-retries: "${core.getInput('max-retries')}" (expected positive integer)`);
@@ -219,7 +284,7 @@ async function run() {
         }
         core.info(`[${label}] SHA256: ${computedHash}`);
 
-        const { data: responseBody } = await uploadWithRetry({
+        const responseBody = await uploadWithRetry({
           url: uploadUrl,
           fileBuffer,
           fileName: path.basename(bundle.zipPath),
@@ -237,10 +302,6 @@ async function run() {
           maxRetries,
           label,
         });
-
-        if (responseBody.code !== 0) {
-          throw new Error(`Server returned error: ${JSON.stringify(responseBody)}`);
-        }
 
         const result = responseBody.data;
         if (!result || !result.bundleVersion || !result.downloadUrl) {
@@ -260,11 +321,6 @@ async function run() {
         core.info(`[${label}] Download URL: ${entry.downloadUrl}`);
       } catch (error) {
         hasFailure = true;
-        const status = error.response?.status;
-        const body = error.response?.data;
-        if (status) {
-          core.error(`[${label}] Server responded with ${status}: ${JSON.stringify(body)}`);
-        }
         core.error(`[${label}] Upload failed: ${error.message}`);
       }
     }
@@ -281,7 +337,15 @@ async function run() {
   }
 }
 
-module.exports = { scanBundleDir, parseInfoFile, validateZipMagic };
+module.exports = {
+  scanBundleDir,
+  parseInfoFile,
+  validateZipMagic,
+  uploadWithRetry,
+  isRetryableError,
+  getRetryDelayMs,
+  ServerResponseError,
+};
 
 if (require.main === module) {
   run();

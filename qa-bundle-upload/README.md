@@ -30,7 +30,7 @@ Scan a directory for `*-bundle.zip` + `.info` metadata files, then upload each b
 | `commit-hash` | No | `${{ github.sha }}` | Git commit hash |
 | `branch` | No | — | Git branch name |
 | `pr-title` | No | — | Pull request title |
-| `max-retries` | No | `3` | Maximum retry attempts (including first try) |
+| `max-retries` | No | `5` | Maximum retry attempts (including first try) |
 
 ## Outputs
 
@@ -146,14 +146,20 @@ The server must return JSON containing at least:
 
 ### Retry Behavior
 
+The utility server wraps every application error in an HTTP 200 body (`{ code, message }`), so non-2xx statuses come from the edge (Cloudflare / gateway) in front of it.
+
 | Condition | Retries? |
 |-----------|----------|
-| Network error | Yes |
-| 5xx server error | Yes |
-| 4xx client error | No |
-| Timeout (5 min) | Yes |
+| Network error / client timeout (2 min) | Yes |
+| HTTP 408 (gateway stopped waiting for the request body) | Yes |
+| HTTP 5xx, including Cloudflare 52x | Yes |
+| Other HTTP 4xx | No |
+| HTTP 200 with body `code: 40000` (server uncaught error) | Yes |
+| HTTP 200 with any other non-zero body `code` (e.g. 401, 409, 429) | No |
 
-Retry delay uses exponential backoff: 2s → 4s → 8s …
+Retrying is safe because the server keys bundles by commit hash and overwrites the same storage object.
+
+Retry delay uses exponential backoff with jitter: ~2s → 4s → 8s → 16s, capped at 30s. Each failed attempt logs the elapsed time, the response body and edge trace headers (`cf-ray`, `x-request-id`, `server`) when present, so the request can be found in Cloudflare / gateway logs.
 
 ## Error Handling
 
